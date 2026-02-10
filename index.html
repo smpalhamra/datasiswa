@@ -1,186 +1,153 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-<meta charset="UTF-8">
-<title>Sistem Data Siswa V1</title>
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-<style>
-body{font-family:Arial;margin:15px;max-width:1100px;margin-inline:auto;background:#f9fbff}
-h1{text-align:center;color:#2b4eff}
-input,select{padding:6px;margin:4px 0;width:100%;box-sizing:border-box}
-button{padding:8px 12px;margin:4px 2px;border:none;border-radius:5px;cursor:pointer}
-.primary{background:#2b4eff;color:white}
-.warn{background:#ffcc00}
-.danger{background:#ff4d4d;color:white}
-table{width:100%;border-collapse:collapse;margin-top:10px;background:white}
-th,td{border:1px solid #ddd;padding:6px;text-align:left;font-size:14px}
-th{background:#e9efff}
-small{color:#888}
-#toast{position:fixed;bottom:20px;right:20px;background:#333;color:#fff;padding:10px 14px;border-radius:6px;opacity:0;transition:.3s}
-</style>
+    <meta charset="UTF-8">
+    <title>Data Siswa SMP</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; }
+        table { border-collapse: collapse; width: 100%; }
+        th, td { border: 1px solid #ccc; padding: 6px; }
+        th { background: #f0f0f0; }
+
+        td.editable { cursor: pointer; }
+        td.editing {
+            background: #fffbe6;
+            outline: 2px solid #4caf50;
+        }
+
+        #status {
+            margin: 10px 0;
+            color: #2e7d32;
+            font-weight: bold;
+            display: none;
+        }
+    </style>
 </head>
 <body>
 
-<h1>📚 Sistem Data Siswa V1</h1>
+<h2>Import Data Siswa (JSON)</h2>
+<input type="file" id="fileJson" accept=".json">
+<button onclick="importJSON()">Import</button>
+<button onclick="resetData()">Reset</button>
 
-<h3>Tambah / Edit Siswa</h3>
-<input type="hidden" id="editIndex">
-<label>Nama *</label>
-<input id="nama">
-<label>Jenis Kelamin</label>
-<select id="jk">
-  <option value="">-- pilih --</option>
-  <option>Laki-laki</option>
-  <option>Perempuan</option>
-</select>
-<label>Kelas (VII-A)</label>
-<input id="kelas">
-<label>NISN</label>
-<input id="nisn">
-<label>NIK</label>
-<input id="nik">
-<label>Tempat Lahir</label>
-<input id="tempat">
-<label>Tanggal Lahir</label>
-<input type="date" id="tgl">
-
-<button class="primary" onclick="simpanSiswa()">💾 Simpan</button>
+<div id="status">✔ Data tersimpan</div>
 
 <hr>
 
-<button onclick="exportExcel()">📊 Export Excel</button>
-<button onclick="backupToGithub()">☁️ Backup GitHub</button>
+<h3>Filter</h3>
+<select id="filterJK">
+    <option value="">Semua JK</option>
+    <option value="L">L</option>
+    <option value="P">P</option>
+</select>
+
+<input id="filterKelas" placeholder="Kelas (VII / VIII / IX)">
 
 <table>
-<thead>
-<tr>
-<th>ID</th><th>Nama</th><th>JK</th><th>Kelas</th>
-<th>NISN</th><th>NIK</th><th>Aksi</th>
-</tr>
-</thead>
-<tbody id="tabel"></tbody>
+    <thead>
+        <tr>
+            <th>No</th>
+            <th>Nama</th>
+            <th>JK</th>
+            <th>Kelas</th>
+            <th>NISN</th>
+            <th>Tempat Lahir</th>
+            <th>Tanggal Lahir</th>
+            <th>NIK Lainnya</th>
+        </tr>
+    </thead>
+    <tbody id="tabelSiswa"></tbody>
 </table>
 
-<div id="toast"></div>
-
 <script>
-const STORAGE_KEY="students_v1";
-const HISTORY_KEY="students_history_v1";
-const GH_TOKEN_KEY="__gh_token";
+let dataSiswa = JSON.parse(localStorage.getItem("dataSiswa")) || [];
+let timerStatus;
 
-function showToast(msg){const t=document.getElementById('toast');t.innerText=msg;t.style.opacity=1;setTimeout(()=>t.style.opacity=0,3000)}
+const statusEl = document.getElementById("status");
+const filterJK = document.getElementById("filterJK");
+const filterKelas = document.getElementById("filterKelas");
 
-function getData(){return JSON.parse(localStorage.getItem(STORAGE_KEY)||"[]")}
-function saveData(d){localStorage.setItem(STORAGE_KEY,JSON.stringify(d))}
+filterJK.onchange = tampilkanData;
+filterKelas.oninput = tampilkanData;
 
-function getHistory(){return JSON.parse(localStorage.getItem(HISTORY_KEY)||"[]")}
-function saveHistory(h){localStorage.setItem(HISTORY_KEY,JSON.stringify(h))}
-
-function genID(){
-  const year=new Date().getFullYear();
-  const d=getData().length+1;
-  return `STD-${year}-${String(d).padStart(4,'0')}`;
+function showStatus() {
+    clearTimeout(timerStatus);
+    statusEl.style.display = "block";
+    timerStatus = setTimeout(() => {
+        statusEl.style.display = "none";
+    }, 2000);
 }
 
-function simpanSiswa(){
-  const nama=document.getElementById('nama').value.trim();
-  if(!nama){alert("Nama wajib!");return;}
-  const siswa={
-    id:genID(),
-    nama,
-    jk:jk.value,
-    kelas:kelas.value,
-    nisn:nisn.value,
-    nik:nik.value,
-    tempat:tempat.value,
-    tgl:tgl.value,
-    aktif:true
-  };
-  let data=getData();
-  const edit=document.getElementById('editIndex').value;
+function importJSON() {
+    const file = fileJson.files[0];
+    if (!file) return alert("Pilih file JSON");
 
-  if(edit===""){
-    data.push(siswa);
-    addHistory("CREATE",siswa);
-  }else{
-    addHistory("UPDATE",data[edit]);
-    data[edit]={...data[edit],...siswa};
-  }
-
-  saveData(data);
-  render();
-  showToast("Data tersimpan");
+    const reader = new FileReader();
+    reader.onload = e => {
+        try {
+            dataSiswa = JSON.parse(e.target.result);
+            localStorage.setItem("dataSiswa", JSON.stringify(dataSiswa));
+            tampilkanData();
+            showStatus();
+        } catch {
+            alert("JSON tidak valid");
+        }
+    };
+    reader.readAsText(file);
 }
 
-function addHistory(action,obj){
-  const h=getHistory();
-  h.push({time:new Date().toISOString(),action,data:obj});
-  saveHistory(h);
+function resetData() {
+    if (confirm("Hapus semua data?")) {
+        localStorage.removeItem("dataSiswa");
+        dataSiswa = [];
+        tampilkanData();
+    }
 }
 
-function render(){
-  const data=getData();
-  tabel.innerHTML=data.map((s,i)=>`
-<tr>
-<td>${s.id}</td>
-<td>${s.nama}</td>
-<td>${s.jk}</td>
-<td>${s.kelas}</td>
-<td>${s.nisn}</td>
-<td>${s.nik}</td>
-<td>
-<button onclick="editSiswa(${i})">✏️</button>
-<button class="danger" onclick="hapusSiswa(${i})">🗑</button>
-</td>
-</tr>`).join("");
+function enableEdit(td, index, field) {
+    td.contentEditable = true;
+    td.classList.add("editing");
+    td.focus();
+
+    td.onblur = () => {
+        td.contentEditable = false;
+        td.classList.remove("editing");
+        dataSiswa[index][field] = td.innerText.trim();
+        localStorage.setItem("dataSiswa", JSON.stringify(dataSiswa));
+        showStatus();
+        tampilkanData(); // refresh agar filter tetap konsisten
+    };
 }
 
-function editSiswa(i){
-  const s=getData()[i];
-  editIndex.value=i;
-  nama.value=s.nama;
-  jk.value=s.jk;
-  kelas.value=s.kelas;
-  nisn.value=s.nisn;
-  nik.value=s.nik;
-  tempat.value=s.tempat;
-  tgl.value=s.tgl;
+function tampilkanData() {
+    const tbody = document.getElementById("tabelSiswa");
+    tbody.innerHTML = "";
+
+    const fJK = filterJK.value;
+    const fKelas = filterKelas.value.toLowerCase();
+
+    dataSiswa
+        .filter(s =>
+            (fJK === "" || s.jk === fJK) &&
+            (fKelas === "" || s.kelas.toLowerCase().includes(fKelas))
+        )
+        .forEach((s, i) => {
+            tbody.innerHTML += `
+            <tr>
+                <td>${i + 1}</td>
+                <td class="editable" ondblclick="enableEdit(this, ${i}, 'nama')">${s.nama}</td>
+                <td class="editable" ondblclick="enableEdit(this, ${i}, 'jk')">${s.jk}</td>
+                <td class="editable" ondblclick="enableEdit(this, ${i}, 'kelas')">${s.kelas}</td>
+                <td class="editable" ondblclick="enableEdit(this, ${i}, 'nisn')">${s.nisn}</td>
+                <td class="editable" ondblclick="enableEdit(this, ${i}, 'tempatLahir')">${s.tempatLahir}</td>
+                <td class="editable" ondblclick="enableEdit(this, ${i}, 'tanggalLahir')">${s.tanggalLahir}</td>
+                <td class="editable" ondblclick="enableEdit(this, ${i}, 'nik')">${s.nik}</td>
+            </tr>`;
+        });
 }
 
-function hapusSiswa(i){
-  let d=getData();
-  addHistory("DELETE",d[i]);
-  d.splice(i,1);
-  saveData(d);
-  render();
-}
-
-function exportExcel(){
-  const ws=XLSX.utils.json_to_sheet(getData());
-  const wb=XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(wb,ws,"Siswa");
-  XLSX.writeFile(wb,"data_siswa.xlsx");
-}
-
-/* ===== GITHUB BACKUP ===== */
-async function backupToGithub(){
-  let token=localStorage.getItem(GH_TOKEN_KEY)||prompt("Masukkan GitHub Token (contents:write)");
-  if(!token)return;
-  localStorage.setItem(GH_TOKEN_KEY,token);
-
-  const content=btoa(unescape(encodeURIComponent(JSON.stringify(getData(),null,2))));
-  const url=`https://api.github.com/repos/USERNAME/REPO/contents/students.json`;
-
-  await fetch(url,{
-    method:"PUT",
-    headers:{Authorization:`Bearer ${token}`,"Content-Type":"application/json"},
-    body:JSON.stringify({message:"update students",content})
-  });
-  showToast("Backup GitHub berhasil");
-}
-
-render();
+tampilkanData();
 </script>
+
 </body>
 </html>
