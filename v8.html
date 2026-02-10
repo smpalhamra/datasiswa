@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<title>Pengelolaan Data Siswa SMP</title>
+<style>
+/* ===== Reset ringan ===== */
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color:#f9f9f9; color:#333; padding:20px; }
+
+/* ===== Header ===== */
+header {
+    font-size:28px; font-weight:700; color:#2c3e50; text-align:center; margin-bottom:20px;
+}
+
+/* ===== Navigation ===== */
+nav { text-align:center; margin-bottom:20px; }
+nav a {
+    display:inline-block; margin:0 15px; text-decoration:none; font-weight:600; color:#3498db; cursor:pointer;
+    transition:color 0.2s;
+}
+nav a:hover { color:#1d6fa5; }
+
+/* Hamburger mobile */
+.hamburger { display:none; cursor:pointer; font-size:24px; }
+@media(max-width:768px){
+    nav a { display:block; margin:5px 0; }
+    .hamburger { display:block; text-align:right; margin-bottom:10px; }
+}
+
+/* ===== Pages ===== */
+.page { display:none; }
+.page.active { display:block; }
+
+/* ===== Table Wrapper ===== */
+.table-wrapper { overflow-x:auto; width:100%; }
+
+/* ===== Table ===== */
+table { width:100%; border-collapse:collapse; margin-top:15px; background-color:#fff; box-shadow:0 0 10px rgba(0,0,0,0.05); }
+th, td { border:1px solid #ddd; padding:8px; text-align:left; }
+th { background-color:#3498db; color:#fff; font-weight:600; text-transform:uppercase; }
+td.editable { cursor:pointer; transition:background-color 0.2s; }
+td.editable:hover { background-color:#eaf2fb; }
+td.editing { background-color:#fffbe6; outline:2px solid #2ecc71; }
+
+/* ===== Buttons ===== */
+button { padding:8px 12px; margin:4px 2px; border:none; border-radius:4px; background-color:#3498db; color:#fff; cursor:pointer; font-weight:600; transition: background-color 0.2s; }
+button:hover { background-color:#1d6fa5; }
+button:active { background-color:#144d73; }
+
+/* ===== Status ===== */
+#status { margin:10px 0; color:#2e7d32; font-weight:bold; display:none; }
+
+/* ===== Inputs & Selects ===== */
+input, select { padding:8px 10px; margin:5px 0; border:1px solid #ccc; border-radius:4px; font-size:14px; width:100%; }
+input:focus, select:focus { border-color:#3498db; outline:none; box-shadow:0 0 4px rgba(52,152,219,0.5); }
+
+/* ===== Riwayat Table ===== */
+#riwayatTable th, #riwayatTable td { padding:6px 10px; border:1px solid #ccc; text-align:left; }
+#riwayatTable th { background-color:#2c3e50; color:#fff; }
+
+/* ===== Responsive ===== */
+@media(max-width:768px){
+    table, th, td { font-size:12px; }
+    header { font-size:22px; }
+    button { padding:10px; font-size:14px; }
+    input, select { font-size:14px; }
+}
+</style>
+</head>
+<body>
+
+<header>Pengelolaan Data Siswa SMP</header>
+
+<div class="hamburger" onclick="toggleNav()">☰ Menu</div>
+<nav id="navLinks">
+    <a onclick="showPage('home')">Home</a>
+    <a onclick="showPage('kelola')">Kelola Data</a>
+    <a onclick="showPage('riwayat')">Riwayat</a>
+</nav>
+
+<!-- Home Page -->
+<div id="home" class="page active">
+<h2>Selamat datang di sistem pengelolaan data siswa SMP!</h2>
+<p>Data yang tersimpan di browser (localStorage) tampil di bawah:</p>
+<div class="table-wrapper">
+    <table>
+        <thead id="theadHome"></thead>
+        <tbody id="tabelHome"></tbody>
+    </table>
+</div>
+</div>
+
+<!-- Kelola Data Page -->
+<div id="kelola" class="page">
+<h2>Kelola Data Siswa</h2>
+
+<select id="importMode">
+    <option value="file" selected>Import Manual (File JSON)</option>
+    <option value="raw">Import Raw (URL / GitHub)</option>
+</select>
+
+<div id="importFile">
+    <input type="file" id="fileJson" accept=".json">
+</div>
+
+<div id="importRaw" style="display:none;">
+    <input type="text" id="rawUrl" placeholder="https://raw.githubusercontent.com/.../siswa.json">
+</div>
+
+<button onclick="importData()">Import</button>
+<button onclick="resetData()">Reset</button>
+<button onclick="exportData()">Ekspor JSON</button>
+
+<div id="status">✔ Data tersimpan</div>
+
+<hr>
+
+<h3>Filter</h3>
+<select id="filterJK">
+    <option value="">Semua JK</option>
+    <option value="L">L</option>
+    <option value="P">P</option>
+</select>
+<input id="filterKelas" placeholder="Kelas (VII / VIII / IX)">
+
+<div class="table-wrapper">
+    <table>
+        <thead id="theadSiswa"></thead>
+        <tbody id="tabelSiswa"></tbody>
+    </table>
+</div>
+</div>
+
+<!-- Riwayat Page -->
+<div id="riwayat" class="page">
+<h2>Riwayat Perubahan Data Siswa</h2>
+<button onclick="hapusRiwayat()">Hapus Semua Riwayat</button>
+<div class="table-wrapper">
+<table id="riwayatTable">
+    <thead>
+        <tr><th>No</th><th>Waktu</th><th>Deskripsi</th><th>Undo</th></tr>
+    </thead>
+    <tbody id="tabelRiwayat"></tbody>
+</table>
+</div>
+</div>
+
+<script>
+// ===== Toggle Hamburger =====
+function toggleNav(){ const nav=document.getElementById('navLinks'); nav.style.display=(nav.style.display==='block'?'none':'block'); }
+
+// ===== Data & Riwayat =====
+let dataSiswa = JSON.parse(localStorage.getItem("dataSiswa"))||[];
+let riwayat = JSON.parse(localStorage.getItem("riwayatSiswa"))||[];
+let timerStatus;
+const kolomStandar=['nama','jk','kelas','nisn','tempatLahir','tanggalLahir','nik'];
+const statusEl=document.getElementById("status");
+const filterJK=document.getElementById("filterJK");
+const filterKelas=document.getElementById("filterKelas");
+const importMode=document.getElementById("importMode");
+const importFile=document.getElementById("importFile");
+const importRaw=document.getElementById("importRaw");
+
+// ===== Navigasi halaman =====
+importMode.onchange=()=>{ importFile.style.display=(importMode.value==='file'?'block':'none'); importRaw.style.display=(importMode.value==='raw'?'block':'none'); };
+function showPage(id){ document.querySelectorAll('.page').forEach(p=>p.classList.remove('active')); document.getElementById(id).classList.add('active'); if(id==='home') tampilkanHome(); if(id==='kelola') tampilkanData(); if(id==='riwayat') tampilkanRiwayat(); }
+
+// ===== Status =====
+function showStatus(){ clearTimeout(timerStatus); statusEl.style.display="block"; timerStatus=setTimeout(()=>{statusEl.style.display="none";},2000); }
+
+// ===== Riwayat =====
+function logRiwayat(desc){ riwayat.unshift({waktu:new Date().toLocaleString(),deskripsi:desc,dataSebelum:JSON.parse(JSON.stringify(dataSiswa))}); localStorage.setItem("riwayatSiswa",JSON.stringify(riwayat)); }
+
+// ===== Import / Reset / Export =====
+function importData(){ importMode.value==='file'?importFromFile():importFromRaw(); }
+function importFromFile(){ const file=fileJson.files[0]; if(!file)return alert("Pilih file JSON"); const reader=new FileReader(); reader.onload=e=>{ try{ const json=JSON.parse(e.target.result); if(!Array.isArray(json)) throw "Format JSON harus array"; logRiwayat("Import data JSON manual ("+json.length+" siswa)"); dataSiswa=json; localStorage.setItem("dataSiswa",JSON.stringify(dataSiswa)); tampilkanData(); showStatus(); }catch(err){ alert(err); } }; reader.readAsText(file); }
+function importFromRaw(){ const url=rawUrl.value.trim(); if(!url)return alert("Masukkan URL"); fetch(url).then(res=>{ if(!res.ok)throw "Gagal fetch data"; return res.json(); }).then(json=>{ if(!Array.isArray(json))throw "Format JSON harus array"; logRiwayat("Import data JSON dari URL ("+json.length+" siswa)"); dataSiswa=json; localStorage.setItem("dataSiswa",JSON.stringify(dataSiswa)); tampilkanData(); showStatus(); }).catch(err=>alert(err)); }
+function resetData(){ logRiwayat("Reset seluruh data siswa"); dataSiswa=[]; localStorage.removeItem("dataSiswa"); tampilkanData(); tampilkanHome(); }
+function exportData(){ const dataStr=JSON.stringify(dataSiswa,null,2); const blob=new Blob([dataStr],{type:"application/json"}); const url=URL.createObjectURL(blob); const a=document.createElement("a"); a.href=url; a.download="data_siswa.json"; a.click(); URL.revokeObjectURL(url); }
+
+// ===== Edit =====
+function enableEdit(td,index,field){ td.contentEditable=true; td.classList.add("editing"); td.focus(); const oldVal=dataSiswa[index][field]||""; td.onblur=()=>{ td.contentEditable=false; td.classList.remove("editing"); const newVal=td.innerText.trim(); if(oldVal!==newVal){ logRiwayat("Edit siswa ["+dataSiswa[index].nama+"] kolom "+field+" dari '"+oldVal+"' menjadi '"+newVal+"'"); dataSiswa[index][field]=newVal; localStorage.setItem("dataSiswa",JSON.stringify(dataSiswa)); showStatus(); tampilkanData(); } }; }
+
+// ===== Delete =====
+function hapusSiswa(index){ const nama=dataSiswa[index].nama||""; logRiwayat("Hapus siswa ["+nama+"]"); dataSiswa.splice(index,1); localStorage.setItem("dataSiswa",JSON.stringify(dataSiswa)); tampilkanData(); showStatus(); }
+
+// ===== Tampilkan Data =====
+function tampilkanData(){ const tbody=document.getElementById("tabelSiswa"); const thead=document.getElementById("theadSiswa"); tbody.innerHTML=""; let tambahanKeys=new Set(); dataSiswa.forEach(s=>Object.keys(s).forEach(k=>{if(!kolomStandar.includes(k)) tambahanKeys.add(k);})); tambahanKeys=Array.from(tambahanKeys); thead.innerHTML=`<tr><th>No</th><th>Nama</th><th>JK</th><th>Kelas</th><th>NISN</th><th>Tempat Lahir</th><th>Tanggal Lahir</th><th>NIK</th>${tambahanKeys.map(k=>`<th>${k}</th>`).join('')}<th>Hapus</th></tr>`; const fJK=filterJK.value; const fKelas=filterKelas.value.toLowerCase(); dataSiswa.filter(s=>(fJK==""||s.jk===fJK)&&(fKelas==""||s.kelas.toLowerCase().includes(fKelas))).forEach((s,i)=>{ tbody.innerHTML+=`<tr><td>${i+1}</td><td class="editable" ondblclick="enableEdit(this,${i},'nama')">${s.nama||''}</td><td class="editable" ondblclick="enableEdit(this,${i},'jk')">${s.jk||''}</td><td class="editable" ondblclick="enableEdit(this,${i},'kelas')">${s.kelas||''}</td><td class="editable" ondblclick="enableEdit(this,${i},'nisn')">${s.nisn||''}</td><td class="editable" ondblclick="enableEdit(this,${i},'tempatLahir')">${s.tempatLahir||''}</td><td class="editable" ondblclick="enableEdit(this,${i},'tanggalLahir')">${s.tanggalLahir||''}</td><td class="editable" ondblclick="enableEdit(this,${i},'nik')">${s.nik||''}</td>${tambahanKeys.map(k=>`<td class="editable" ondblclick="enableEdit(this,${i},'${k}')">${s[k]||''}</td>`).join('')}<td><button onclick="hapusSiswa(${i})">❌</button></td></tr>`; }); }
+
+// ===== Tampilkan Home =====
+function tampilkanHome(){ const tbody=document.getElementById("tabelHome"); const thead=document.getElementById("theadHome"); tbody.innerHTML=""; let tambahanKeys=new Set(); dataSiswa.forEach(s=>Object.keys(s).forEach(k=>{if(!kolomStandar.includes(k)) tambahanKeys.add(k);})); tambahanKeys=Array.from(tambahanKeys); thead.innerHTML=`<tr><th>No</th><th>Nama</th><th>JK</th><th>Kelas</th><th>NISN</th><th>Tempat Lahir</th><th>Tanggal Lahir</th><th>NIK</th>${tambahanKeys.map(k=>`<th>${k}</th>`).join('')}</tr>`; dataSiswa.forEach((s,i)=>{ tbody.innerHTML+=`<tr><td>${i+1}</td><td>${s.nama||''}</td><td>${s.jk||''}</td><td>${s.kelas||''}</td><td>${s.nisn||''}</td><td>${s.tempatLahir||''}</td><td>${s.tanggalLahir||''}</td><td>${s.nik||''}</td>${tambahanKeys.map(k=>`<td>${s[k]||''}</td>`).join('')}</tr>`; }); }
+
+// ===== Riwayat =====
+function tampilkanRiwayat(){ const tbody=document.getElementById("tabelRiwayat"); tbody.innerHTML=""; riwayat.forEach((r,i)=>{ tbody.innerHTML+=`<tr><td>${i+1}</td><td>${r.waktu}</td><td>${r.deskripsi}</td><td><button onclick="undoRiwayat(${i})">↩️ Undo</button></td></tr>`; }); }
+function undoRiwayat(index){ const entry=riwayat[index]; if(entry&&entry.dataSebelum){ dataSiswa=entry.dataSebelum; localStorage.setItem("dataSiswa",JSON.stringify(dataSiswa)); riwayat.splice(index,1); localStorage.setItem("riwayatSiswa",JSON.stringify(riwayat)); tampilkanData(); tampilkanHome(); tampilkanRiwayat(); showStatus(); alert("Undo berhasil: "+entry.deskripsi); } }
+function hapusRiwayat(){ if(confirm("Yakin ingin menghapus seluruh riwayat?")){ riwayat=[]; localStorage.removeItem("riwayatSiswa"); tampilkanRiwayat(); alert("Riwayat berhasil dihapus"); } }
+
+// ===== Filter events =====
+filterJK.onchange=tampilkanData;
+filterKelas.oninput=tampilkanData;
+
+// ===== Inisialisasi =====
+tampilkanHome();
+tampilkanData();
+</script>
+</body>
+</html>
