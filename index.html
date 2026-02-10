@@ -5,29 +5,38 @@
     <title>Data Siswa SMP</title>
     <style>
         body { font-family: Arial, sans-serif; padding: 20px; }
-        table { border-collapse: collapse; width: 100%; }
+        table { border-collapse: collapse; width: 100%; margin-top: 10px; }
         th, td { border: 1px solid #ccc; padding: 6px; }
         th { background: #f0f0f0; }
-
         td.editable { cursor: pointer; }
-        td.editing {
-            background: #fffbe6;
-            outline: 2px solid #4caf50;
-        }
-
-        #status {
-            margin: 10px 0;
-            color: #2e7d32;
-            font-weight: bold;
-            display: none;
-        }
+        td.editing { background: #fffbe6; outline: 2px solid #4caf50; }
+        #status { margin: 10px 0; color: #2e7d32; font-weight: bold; display: none; }
+        #importRaw { margin-top: 5px; }
+        input, select, button { margin: 5px 0; padding: 4px; }
     </style>
 </head>
 <body>
 
-<h2>Import Data Siswa (JSON)</h2>
-<input type="file" id="fileJson" accept=".json">
-<button onclick="importJSON()">Import</button>
+<h2>Import Data Siswa</h2>
+
+<!-- Dropdown untuk pilih mode import -->
+<select id="importMode">
+    <option value="file" selected>Import Manual (File JSON)</option>
+    <option value="raw">Import Raw (URL / GitHub)</option>
+</select>
+
+<!-- Import manual -->
+<div id="importFile">
+    <input type="file" id="fileJson" accept=".json">
+</div>
+
+<!-- Import raw (URL) -->
+<div id="importRaw" style="display:none;">
+    <input type="text" id="rawUrl" style="width:70%"
+           placeholder="https://raw.githubusercontent.com/.../siswa.json">
+</div>
+
+<button onclick="importData()">Import</button>
 <button onclick="resetData()">Reset</button>
 
 <div id="status">✔ Data tersimpan</div>
@@ -40,7 +49,6 @@
     <option value="L">L</option>
     <option value="P">P</option>
 </select>
-
 <input id="filterKelas" placeholder="Kelas (VII / VIII / IX)">
 
 <table>
@@ -67,9 +75,25 @@ const statusEl = document.getElementById("status");
 const filterJK = document.getElementById("filterJK");
 const filterKelas = document.getElementById("filterKelas");
 
+const importMode = document.getElementById("importMode");
+const importFile = document.getElementById("importFile");
+const importRaw = document.getElementById("importRaw");
+
+importMode.onchange = () => {
+    if (importMode.value === "file") {
+        importFile.style.display = "block";
+        importRaw.style.display = "none";
+    } else {
+        importFile.style.display = "none";
+        importRaw.style.display = "block";
+    }
+};
+
+// Auto filter ketika filter diubah
 filterJK.onchange = tampilkanData;
 filterKelas.oninput = tampilkanData;
 
+// Tampilkan status tersimpan
 function showStatus() {
     clearTimeout(timerStatus);
     statusEl.style.display = "block";
@@ -78,24 +102,59 @@ function showStatus() {
     }, 2000);
 }
 
-function importJSON() {
+// Import data sesuai mode
+function importData() {
+    if (importMode.value === "file") {
+        importFromFile();
+    } else {
+        importFromRaw();
+    }
+}
+
+// Import dari file JSON
+function importFromFile() {
     const file = fileJson.files[0];
     if (!file) return alert("Pilih file JSON");
 
     const reader = new FileReader();
     reader.onload = e => {
         try {
-            dataSiswa = JSON.parse(e.target.result);
+            const json = JSON.parse(e.target.result);
+            if (!Array.isArray(json)) throw "Format JSON harus array";
+
+            dataSiswa = json;
             localStorage.setItem("dataSiswa", JSON.stringify(dataSiswa));
             tampilkanData();
             showStatus();
-        } catch {
-            alert("JSON tidak valid");
+        } catch (err) {
+            alert(err);
         }
     };
     reader.readAsText(file);
 }
 
+// Import dari raw URL (GitHub)
+function importFromRaw() {
+    const url = rawUrl.value.trim();
+    if (!url) return alert("Masukkan URL raw");
+
+    fetch(url)
+        .then(res => {
+            if (!res.ok) throw "Gagal fetch data";
+            return res.json();
+        })
+        .then(json => {
+            if (!Array.isArray(json)) throw "Format JSON harus array";
+
+            dataSiswa = json;
+            localStorage.setItem("dataSiswa", JSON.stringify(dataSiswa));
+            tampilkanData();
+            showStatus();
+        })
+        .catch(err => alert(err));
+}
+
+// Reset semua data
 function resetData() {
     if (confirm("Hapus semua data?")) {
         localStorage.removeItem("dataSiswa");
@@ -104,6 +163,7 @@ function resetData() {
     }
 }
 
+// Enable editing saat double-click
 function enableEdit(td, index, field) {
     td.contentEditable = true;
     td.classList.add("editing");
@@ -115,10 +175,11 @@ function enableEdit(td, index, field) {
         dataSiswa[index][field] = td.innerText.trim();
         localStorage.setItem("dataSiswa", JSON.stringify(dataSiswa));
         showStatus();
-        tampilkanData(); // refresh agar filter tetap konsisten
+        tampilkanData(); // refresh filter
     };
 }
 
+// Tampilkan tabel
 function tampilkanData() {
     const tbody = document.getElementById("tabelSiswa");
     tbody.innerHTML = "";
@@ -146,6 +207,7 @@ function tampilkanData() {
         });
 }
 
+// Inisialisasi tabel saat load
 tampilkanData();
 </script>
 
