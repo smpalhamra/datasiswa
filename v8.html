@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Pengelolaan Data Siswa</title>
+<title>Pengelolaan Data Siswa SMP</title>
 
 <style>
 /* ===== RESET ===== */
@@ -180,7 +180,7 @@ td.editing {
 
 <body>
 
-<header>Pengelolaan Data Siswa</header>
+<header>Pengelolaan Data Siswa SMP</header>
 
 <nav>
   <a onclick="showPage('home')">Home</a>
@@ -220,11 +220,14 @@ td.editing {
     </div>
   </div>
 
-  <div class="form-row">
-    <button onclick="importData()">Import</button>
-    <button onclick="exportData()">Ekspor</button>
-    <button onclick="resetData()">Reset</button>
-  </div>
+<div class="form-row">
+  <button onclick="importData()">Import</button>
+  <button onclick="exportData()">Ekspor</button>
+  <button onclick="exportFilteredJSON()">Ekspor JSON (Tampil)</button>
+  <button onclick="exportFilteredExcel()">Ekspor Excel (Tampil)</button>
+  <button onclick="resetData()">Reset</button>
+</div>
+
 
   <div id="status">✔ Data tersimpan</div>
 
@@ -271,8 +274,283 @@ td.editing {
 
 <!-- ===== SCRIPT TETAP (PUNYA KAMU) ===== -->
 <script>
-/* JS KAMU TIDAK DIUBAH */
+// ===== Data utama & Riwayat =====
+let dataSiswa = JSON.parse(localStorage.getItem("dataSiswa")) || [];
+let riwayat = JSON.parse(localStorage.getItem("riwayatSiswa")) || [];
+let timerStatus;
+const kolomStandar = ['nama','jk','kelas','nisn','tempatLahir','tanggalLahir','nik'];
+
+const statusEl = document.getElementById("status");
+const filterJK = document.getElementById("filterJK");
+const filterKelas = document.getElementById("filterKelas");
+
+const importMode = document.getElementById("importMode");
+const importFile = document.getElementById("importFile");
+const importRaw = document.getElementById("importRaw");
+
+// ===== Navigasi halaman =====
+importMode.onchange = () => {
+    if(importMode.value==='file'){ importFile.style.display='block'; importRaw.style.display='none'; }
+    else { importFile.style.display='none'; importRaw.style.display='block'; }
+};
+
+function showPage(pageId){
+    document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+    document.getElementById(pageId).classList.add('active');
+    if(pageId==='home') tampilkanHome();
+    if(pageId==='kelola') tampilkanData();
+    if(pageId==='riwayat') tampilkanRiwayat();
+}
+
+// ===== Status tersimpan =====
+function showStatus(){
+    clearTimeout(timerStatus);
+    statusEl.style.display="block";
+    timerStatus = setTimeout(()=>{statusEl.style.display="none";},2000);
+}
+
+// ===== Riwayat helper =====
+function logRiwayat(desc){
+    riwayat.unshift({ waktu: new Date().toLocaleString(), deskripsi: desc, dataSebelum: JSON.parse(JSON.stringify(dataSiswa)) });
+    localStorage.setItem("riwayatSiswa", JSON.stringify(riwayat));
+}
+
+// ===== Import =====
+function importData(){ if(importMode.value==='file') importFromFile(); else importFromRaw(); }
+
+function importFromFile(){
+    const file = fileJson.files[0]; if(!file) return alert("Pilih file JSON");
+    const reader = new FileReader();
+    reader.onload = e=>{
+        try{
+            const json = JSON.parse(e.target.result);
+            if(!Array.isArray(json)) throw "Format JSON harus array";
+            logRiwayat("Import data JSON manual ("+json.length+" siswa)");
+            dataSiswa = json;
+            localStorage.setItem("dataSiswa", JSON.stringify(dataSiswa));
+            tampilkanData(); showStatus();
+        }catch(err){ alert(err); }
+    };
+    reader.readAsText(file);
+}
+
+function importFromRaw(){
+    const url = rawUrl.value.trim(); if(!url) return alert("Masukkan URL raw");
+    fetch(url).then(res=>{ if(!res.ok) throw "Gagal fetch data"; return res.json(); })
+    .then(json=>{
+        if(!Array.isArray(json)) throw "Format JSON harus array";
+        logRiwayat("Import data JSON dari URL ("+json.length+" siswa)");
+        dataSiswa=json;
+        localStorage.setItem("dataSiswa", JSON.stringify(dataSiswa));
+        tampilkanData(); showStatus();
+    }).catch(err=>alert(err));
+}
+
+// ===== Reset =====
+function resetData(){
+    logRiwayat("Reset seluruh data siswa");
+    dataSiswa=[]; localStorage.removeItem("dataSiswa");
+    tampilkanData(); tampilkanHome();
+}
+
+// ===== Ekspor =====
+function exportData(){
+    const dataStr = JSON.stringify(dataSiswa,null,2);
+    const blob = new Blob([dataStr],{type:"application/json"});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href=url; a.download="data_siswa.json"; a.click();
+    URL.revokeObjectURL(url);
+}
+
+// ===== Edit =====
+function enableEdit(td,index,field){
+    td.contentEditable=true; td.classList.add("editing"); td.focus();
+    const oldVal = dataSiswa[index][field]||"";
+    td.onblur=()=>{
+        td.contentEditable=false; td.classList.remove("editing");
+        const newVal = td.innerText.trim();
+        if(oldVal!==newVal){
+            logRiwayat("Edit siswa ["+dataSiswa[index].nama+"] kolom "+field+" dari '"+oldVal+"' menjadi '"+newVal+"'");
+            dataSiswa[index][field]=newVal;
+            localStorage.setItem("dataSiswa", JSON.stringify(dataSiswa));
+            showStatus(); tampilkanData();
+        }
+    };
+}
+
+// ===== Delete =====
+function hapusSiswa(index){
+    const nama = dataSiswa[index].nama||"";
+    logRiwayat("Hapus siswa ["+nama+"]");
+    dataSiswa.splice(index,1);
+    localStorage.setItem("dataSiswa", JSON.stringify(dataSiswa));
+    tampilkanData(); showStatus();
+}
+
+// ===== Tampilkan tabel Kelola Data =====
+function tampilkanData(){
+    const tbody=document.getElementById("tabelSiswa");
+    const thead=document.getElementById("theadSiswa");
+    tbody.innerHTML="";
+    let tambahanKeys = new Set();
+    dataSiswa.forEach(s=>Object.keys(s).forEach(k=>{if(!kolomStandar.includes(k)) tambahanKeys.add(k);}));
+    tambahanKeys=Array.from(tambahanKeys);
+
+    thead.innerHTML=`<tr>
+        <th>No</th><th>Nama</th><th>JK</th><th>Kelas</th><th>NISN</th>
+        <th>Tempat Lahir</th><th>Tanggal Lahir</th><th>NIK</th>
+        ${tambahanKeys.map(k=>`<th>${k}</th>`).join('')}<th>Hapus</th>
+    </tr>`;
+
+    const fJK=filterJK.value; const fKelas=filterKelas.value.toLowerCase();
+
+    dataSiswa.filter(s=>(fJK==""||s.jk===fJK)&&(fKelas==""||s.kelas.toLowerCase().includes(fKelas)))
+    .forEach((s,i)=>{
+        tbody.innerHTML+=`<tr>
+            <td>${i+1}</td>
+            <td class="editable" ondblclick="enableEdit(this,${i},'nama')">${s.nama||''}</td>
+            <td class="editable" ondblclick="enableEdit(this,${i},'jk')">${s.jk||''}</td>
+            <td class="editable" ondblclick="enableEdit(this,${i},'kelas')">${s.kelas||''}</td>
+            <td class="editable" ondblclick="enableEdit(this,${i},'nisn')">${s.nisn||''}</td>
+            <td class="editable" ondblclick="enableEdit(this,${i},'tempatLahir')">${s.tempatLahir||''}</td>
+            <td class="editable" ondblclick="enableEdit(this,${i},'tanggalLahir')">${s.tanggalLahir||''}</td>
+            <td class="editable" ondblclick="enableEdit(this,${i},'nik')">${s.nik||''}</td>
+            ${tambahanKeys.map(k=>`<td class="editable" ondblclick="enableEdit(this,${i},'${k}')">${s[k]||''}</td>`).join('')}
+            <td><button onclick="hapusSiswa(${i})">❌</button></td>
+        </tr>`;
+    });
+}
+
+// ===== Tampilkan tabel Home =====
+function tampilkanHome(){
+    const tbody=document.getElementById("tabelHome");
+    const thead=document.getElementById("theadHome");
+    tbody.innerHTML="";
+    let tambahanKeys=new Set();
+    dataSiswa.forEach(s=>Object.keys(s).forEach(k=>{if(!kolomStandar.includes(k)) tambahanKeys.add(k);}));
+    tambahanKeys=Array.from(tambahanKeys);
+
+    thead.innerHTML=`<tr>
+        <th>No</th><th>Nama</th><th>JK</th><th>Kelas</th><th>NISN</th>
+        <th>Tempat Lahir</th><th>Tanggal Lahir</th><th>NIK</th>
+        ${tambahanKeys.map(k=>`<th>${k}</th>`).join('')}
+    </tr>`;
+
+    dataSiswa.forEach((s,i)=>{
+        tbody.innerHTML+=`<tr>
+            <td>${i+1}</td><td>${s.nama||''}</td><td>${s.jk||''}</td>
+            <td>${s.kelas||''}</td><td>${s.nisn||''}</td><td>${s.tempatLahir||''}</td>
+            <td>${s.tanggalLahir||''}</td><td>${s.nik||''}</td>
+            ${tambahanKeys.map(k=>`<td>${s[k]||''}</td>`).join('')}
+        </tr>`;
+    });
+}
+
+// ===== Tampilkan Riwayat =====
+function tampilkanRiwayat(){
+    const tbody=document.getElementById("tabelRiwayat");
+    tbody.innerHTML="";
+    riwayat.forEach((r,i)=>{
+        tbody.innerHTML+=`<tr>
+            <td>${i+1}</td><td>${r.waktu}</td><td>${r.deskripsi}</td>
+            <td><button onclick="undoRiwayat(${i})">↩️ Undo</button></td>
+        </tr>`;
+    });
+}
+
+// ===== Undo =====
+function undoRiwayat(index){
+    const entry = riwayat[index];
+    if(entry && entry.dataSebelum){
+        dataSiswa = entry.dataSebelum;
+        localStorage.setItem("dataSiswa", JSON.stringify(dataSiswa));
+        riwayat.splice(index,1);
+        localStorage.setItem("riwayatSiswa", JSON.stringify(riwayat));
+        tampilkanData(); tampilkanHome(); tampilkanRiwayat();
+        showStatus();
+        alert("Undo berhasil: " + entry.deskripsi);
+    }
+}
+
+// ===== Ambil data yang SEDANG TAMPIL di tabel =====
+function getVisibleTableData() {
+    const rows = document.querySelectorAll("#tabelSiswa tr");
+    const headers = Array.from(document.querySelectorAll("#theadSiswa th"))
+        .map(th => th.innerText.trim())
+        .filter(h => h !== "No" && h !== "Hapus");
+
+    let data = [];
+
+    rows.forEach(row => {
+        const cells = row.querySelectorAll("td");
+        if (cells.length === 0) return;
+
+        let obj = {};
+        let colIndex = 0;
+
+        cells.forEach((cell, i) => {
+            const header = headers[colIndex];
+            if (!header) return;
+
+            // Lewati kolom No & Hapus
+            if (i === 0 || header === "Hapus") return;
+
+            obj[header] = cell.innerText.trim();
+            colIndex++;
+        });
+
+        data.push(obj);
+    });
+
+    return data;
+}
+
+function exportFilteredJSON() {
+    const data = getVisibleTableData();
+    if (data.length === 0) return alert("Tidak ada data yang tampil");
+
+    const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "data_siswa_filtered.json";
+    a.click();
+    URL.revokeObjectURL(url);
+}
+
+function exportFilteredExcel() {
+    const data = getVisibleTableData();
+    if (data.length === 0) return alert("Tidak ada data yang tampil");
+
+    const worksheet = XLSX.utils.json_to_sheet(data);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Data Siswa");
+
+    XLSX.writeFile(workbook, "data_siswa_filtered.xlsx");
+}
+
+
+// ===== Hapus semua riwayat =====
+function hapusRiwayat(){
+    if(confirm("Yakin ingin menghapus seluruh riwayat?")){
+        riwayat=[];
+        localStorage.removeItem("riwayatSiswa");
+        tampilkanRiwayat();
+        alert("Riwayat berhasil dihapus");
+    }
+}
+
+// ===== Filter events =====
+filterJK.onchange=tampilkanData;
+filterKelas.oninput=tampilkanData;
+
+// ===== Inisialisasi =====
+tampilkanHome();
+tampilkanData();
 </script>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 
 </body>
 </html>
