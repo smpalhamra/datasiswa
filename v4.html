@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <title>Pengelolaan Data Siswa SMP</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; }
+        header { font-size: 24px; font-weight: bold; margin-bottom: 20px; }
+        nav a { margin-right: 15px; cursor: pointer; text-decoration: underline; color: blue; }
+        .page { display: none; }
+        .active { display: block; }
+        table { border-collapse: collapse; width: 100%; margin-top: 10px; }
+        th, td { border: 1px solid #ccc; padding: 6px; }
+        th { background: #f0f0f0; }
+        td.editable { cursor: pointer; }
+        td.editing { background: #fffbe6; outline: 2px solid #4caf50; }
+        #status { margin: 10px 0; color: #2e7d32; font-weight: bold; display: none; }
+        input, select, button { margin: 5px 0; padding: 4px; }
+        #importRaw { margin-top: 5px; }
+        #riwayatTable th, #riwayatTable td { text-align: left; }
+    </style>
+</head>
+<body>
+
+<header>Pengelolaan Data Siswa SMP</header>
+
+<nav>
+    <a onclick="showPage('home')">Home</a>
+    <a onclick="showPage('import')">Import</a>
+    <a onclick="showPage('riwayat')">Riwayat</a>
+</nav>
+
+<!-- Home Page -->
+<div id="home" class="page active">
+    <h2>Selamat datang di sistem pengelolaan data siswa!</h2>
+    <p>Data yang tersimpan di browser (localStorage) tampil di bawah:</p>
+    <table>
+        <thead id="theadHome"></thead>
+        <tbody id="tabelHome"></tbody>
+    </table>
+</div>
+
+<!-- Import Page -->
+<div id="import" class="page">
+    <h2>Import Data Siswa</h2>
+
+    <select id="importMode">
+        <option value="file" selected>Import Manual (File JSON)</option>
+        <option value="raw">Import Raw (URL / GitHub)</option>
+    </select>
+
+    <div id="importFile">
+        <input type="file" id="fileJson" accept=".json">
+    </div>
+
+    <div id="importRaw" style="display:none;">
+        <input type="text" id="rawUrl" style="width:70%" placeholder="https://raw.githubusercontent.com/.../siswa.json">
+    </div>
+
+    <button onclick="importData()">Import</button>
+    <button onclick="resetData()">Reset</button>
+
+    <div id="status">✔ Data tersimpan</div>
+
+    <hr>
+
+    <h3>Filter</h3>
+    <select id="filterJK">
+        <option value="">Semua JK</option>
+        <option value="L">L</option>
+        <option value="P">P</option>
+    </select>
+    <input id="filterKelas" placeholder="Kelas (VII / VIII / IX)">
+
+    <table>
+        <thead id="theadSiswa"></thead>
+        <tbody id="tabelSiswa"></tbody>
+    </table>
+</div>
+
+<!-- Riwayat Page -->
+<div id="riwayat" class="page">
+    <h2>Riwayat Perubahan Data Siswa</h2>
+    <table id="riwayatTable">
+        <thead>
+            <tr><th>No</th><th>Waktu</th><th>Deskripsi</th></tr>
+        </thead>
+        <tbody id="tabelRiwayat"></tbody>
+    </table>
+</div>
+
+<script>
+// ===== Data utama & Riwayat =====
+let dataSiswa = JSON.parse(localStorage.getItem("dataSiswa")) || [];
+let riwayat = JSON.parse(localStorage.getItem("riwayatSiswa")) || [];
+let timerStatus;
+const kolomStandar = ['nama','jk','kelas','nisn','tempatLahir','tanggalLahir','nik'];
+
+const statusEl = document.getElementById("status");
+const filterJK = document.getElementById("filterJK");
+const filterKelas = document.getElementById("filterKelas");
+
+const importMode = document.getElementById("importMode");
+const importFile = document.getElementById("importFile");
+const importRaw = document.getElementById("importRaw");
+
+// ===== Navigasi halaman =====
+importMode.onchange = () => {
+    if(importMode.value==='file') { importFile.style.display='block'; importRaw.style.display='none'; }
+    else { importFile.style.display='none'; importRaw.style.display='block'; }
+};
+
+function showPage(pageId) {
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+    document.getElementById(pageId).classList.add('active');
+    if(pageId==='home') tampilkanHome();
+    if(pageId==='import') tampilkanData();
+    if(pageId==='riwayat') tampilkanRiwayat();
+}
+
+// ===== Status tersimpan =====
+function showStatus() {
+    clearTimeout(timerStatus);
+    statusEl.style.display = "block";
+    timerStatus = setTimeout(()=>{statusEl.style.display="none";},2000);
+}
+
+// ===== Import =====
+function importData() { if(importMode.value==='file') importFromFile(); else importFromRaw(); }
+
+function importFromFile() {
+    const file = fileJson.files[0]; if(!file) return alert("Pilih file JSON");
+    const reader = new FileReader();
+    reader.onload = e => {
+        try {
+            const json = JSON.parse(e.target.result);
+            if(!Array.isArray(json)) throw "Format JSON harus array";
+            dataSiswa = json;
+            localStorage.setItem("dataSiswa", JSON.stringify(dataSiswa));
+            logRiwayat("Import data JSON manual ("+dataSiswa.length+" siswa)");
+            tampilkanData(); showStatus();
+        } catch(err){ alert(err); }
+    };
+    reader.readAsText(file);
+}
+
+function importFromRaw() {
+    const url = rawUrl.value.trim(); if(!url) return alert("Masukkan URL raw");
+    fetch(url)
+        .then(res=>{ if(!res.ok) throw "Gagal fetch data"; return res.json(); })
+        .then(json=>{
+            if(!Array.isArray(json)) throw "Format JSON harus array";
+            dataSiswa = json;
+            localStorage.setItem("dataSiswa", JSON.stringify(dataSiswa));
+            logRiwayat("Import data JSON dari URL ("+dataSiswa.length+" siswa)");
+            tampilkanData(); showStatus();
+        })
+        .catch(err=>alert(err));
+}
+
+// ===== Reset =====
+function resetData() {
+    dataSiswa=[]; localStorage.removeItem("dataSiswa");
+    logRiwayat("Reset seluruh data siswa");
+    tampilkanData(); tampilkanHome();
+}
+
+// ===== Edit =====
+function enableEdit(td,index,field){
+    td.contentEditable=true; td.classList.add("editing"); td.focus();
+    const oldVal = dataSiswa[index][field]||"";
+    td.onblur=()=>{
+        td.contentEditable=false; td.classList.remove("editing");
+        const newVal = td.innerText.trim();
+        if(oldVal!==newVal){
+            dataSiswa[index][field]=newVal;
+            localStorage.setItem("dataSiswa", JSON.stringify(dataSiswa));
+            logRiwayat("Edit siswa ["+dataSiswa[index].nama+"] kolom "+field+" dari '"+oldVal+"' menjadi '"+newVal+"'");
+            showStatus(); tampilkanData();
+        }
+    };
+}
+
+// ===== Delete =====
+function hapusSiswa(index){
+    const nama = dataSiswa[index].nama||"";
+    dataSiswa.splice(index,1);
+    localStorage.setItem("dataSiswa", JSON.stringify(dataSiswa));
+    logRiwayat("Hapus siswa ["+nama+"]");
+    tampilkanData(); showStatus();
+}
+
+// ===== Tampilkan tabel Import =====
+function tampilkanData(){
+    const tbody = document.getElementById("tabelSiswa");
+    const thead = document.getElementById("theadSiswa");
+    tbody.innerHTML="";
+
+    let tambahanKeys = new Set();
+    dataSiswa.forEach(s=>Object.keys(s).forEach(k=>{ if(!kolomStandar.includes(k)) tambahanKeys.add(k); }));
+    tambahanKeys=Array.from(tambahanKeys);
+
+    thead.innerHTML=`<tr>
+        <th>No</th>
+        <th>Nama</th>
+        <th>JK</th>
+        <th>Kelas</th>
+        <th>NISN</th>
+        <th>Tempat Lahir</th>
+        <th>Tanggal Lahir</th>
+        <th>NIK</th>
+        ${tambahanKeys.map(k=>`<th>${k}</th>`).join('')}
+        <th>Hapus</th>
+    </tr>`;
+
+    const fJK = filterJK.value;
+    const fKelas = filterKelas.value.toLowerCase();
+
+    dataSiswa.filter(s=>(fJK==""||s.jk===fJK)&&(fKelas==""||s.kelas.toLowerCase().includes(fKelas)))
+    .forEach((s,i)=>{
+        tbody.innerHTML+=`<tr>
+            <td>${i+1}</td>
+            <td class="editable" ondblclick="enableEdit(this, ${i}, 'nama')">${s.nama||''}</td>
+            <td class="editable" ondblclick="enableEdit(this, ${i}, 'jk')">${s.jk||''}</td>
+            <td class="editable" ondblclick="enableEdit(this, ${i}, 'kelas')">${s.kelas||''}</td>
+            <td class="editable" ondblclick="enableEdit(this, ${i}, 'nisn')">${s.nisn||''}</td>
+            <td class="editable" ondblclick="enableEdit(this, ${i}, 'tempatLahir')">${s.tempatLahir||''}</td>
+            <td class="editable" ondblclick="enableEdit(this, ${i}, 'tanggalLahir')">${s.tanggalLahir||''}</td>
+            <td class="editable" ondblclick="enableEdit(this, ${i}, 'nik')">${s.nik||''}</td>
+            ${tambahanKeys.map(k=>`<td class="editable" ondblclick="enableEdit(this, ${i}, '${k}')">${s[k]||''}</td>`).join('')}
+            <td><button onclick="hapusSiswa(${i})">❌</button></td>
+        </tr>`;
+    });
+}
+
+// ===== Tampilkan tabel Home =====
+function tampilkanHome(){
+    const tbody=document.getElementById("tabelHome");
+    const thead=document.getElementById("theadHome");
+    tbody.innerHTML="";
+    let tambahanKeys = new Set();
+    dataSiswa.forEach(s=>Object.keys(s).forEach(k=>{ if(!kolomStandar.includes(k)) tambahanKeys.add(k); }));
+    tambahanKeys=Array.from(tambahanKeys);
+
+    thead.innerHTML=`<tr>
+        <th>No</th>
+        <th>Nama</th>
+        <th>JK</th>
+        <th>Kelas</th>
+        <th>NISN</th>
+        <th>Tempat Lahir</th>
+        <th>Tanggal Lahir</th>
+        <th>NIK</th>
+        ${tambahanKeys.map(k=>`<th>${k}</th>`).join('')}
+    </tr>`;
+
+    dataSiswa.forEach((s,i)=>{
+        tbody.innerHTML+=`<tr>
+            <td>${i+1}</td>
+            <td>${s.nama||''}</td>
+            <td>${s.jk||''}</td>
+            <td>${s.kelas||''}</td>
+            <td>${s.nisn||''}</td>
+            <td>${s.tempatLahir||''}</td>
+            <td>${s.tanggalLahir||''}</td>
+            <td>${s.nik||''}</td>
+            ${tambahanKeys.map(k=>`<td>${s[k]||''}</td>`).join('')}
+        </tr>`;
+    });
+}
+
+// ===== Riwayat =====
+function logRiwayat(desc){
+    const now = new Date();
+    riwayat.unshift({waktu: now.toLocaleString(), deskripsi: desc});
+    localStorage.setItem("riwayatSiswa", JSON.stringify(riwayat));
+}
+
+function tampilkanRiwayat(){
+    const tbody=document.getElementById("tabelRiwayat");
+    tbody.innerHTML="";
+    riwayat.forEach((r,i)=>{
+        tbody.innerHTML+=`<tr>
+            <td>${i+1}</td>
+            <td>${r.waktu}</td>
+            <td>${r.deskripsi}</td>
+        </tr>`;
+    });
+}
+
+// ===== Filter events =====
+filterJK.onchange=tampilkanData;
+filterKelas.oninput=tampilkanData;
+
+// ===== Inisialisasi =====
+tampilkanHome();
+tampilkanData();
+</script>
+
+</body>
+</html>
