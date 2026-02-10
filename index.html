@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Pengelolaan Data Siswa</title>
+<title>Pengelolaan Data Siswa SMP</title>
 
 <style>
 /* ===== RESET ===== */
@@ -180,7 +180,7 @@ td.editing {
 
 <body>
 
-<header>Pengelolaan Data Siswa</header>
+<header>Pengelolaan Data Siswa SMP</header>
 
 <nav>
   <a onclick="showPage('home')">Home</a>
@@ -216,15 +216,22 @@ td.editing {
     </div>
 
     <div id="importRaw" style="display:none;">
-      <input type="text" id="rawUrl" placeholder="https://raw.githubusercontent.com/...">
+      <input type="text" id="rawUrl" placeholder="https://raw.githubusercontent.com/..." 
+value="https://raw.githubusercontent.com/smpalhamra/datasiswa/refs/heads/main/db/dasis.json">
+
     </div>
+	
+	
   </div>
 
-  <div class="form-row">
-    <button onclick="importData()">Import</button>
-    <button onclick="exportData()">Ekspor</button>
-    <button onclick="resetData()">Reset</button>
-  </div>
+<div class="form-row">
+  <button onclick="importData()">Import</button>
+  <button onclick="exportData()">Ekspor</button>
+  <button onclick="exportFilteredJSON()">Ekspor JSON (Tampil)</button>
+  <button onclick="exportFilteredExcel()">Ekspor Excel (Tampil)</button>
+  <button onclick="resetData()">Reset</button>
+</div>
+
 
   <div id="status">✔ Data tersimpan</div>
 
@@ -470,6 +477,64 @@ function undoRiwayat(index){
     }
 }
 
+// ===== Ambil data yang SEDANG TAMPIL di tabel =====
+function getVisibleTableData() {
+    const rows = document.querySelectorAll("#tabelSiswa tr");
+    const headers = Array.from(document.querySelectorAll("#theadSiswa th"))
+        .map(th => th.innerText.trim())
+        .filter(h => h !== "No" && h !== "Hapus");
+
+    let data = [];
+
+    rows.forEach(row => {
+        const cells = row.querySelectorAll("td");
+        if (cells.length === 0) return;
+
+        let obj = {};
+        let colIndex = 0;
+
+        cells.forEach((cell, i) => {
+            const header = headers[colIndex];
+            if (!header) return;
+
+            // Lewati kolom No & Hapus
+            if (i === 0 || header === "Hapus") return;
+
+            obj[header] = cell.innerText.trim();
+            colIndex++;
+        });
+
+        data.push(obj);
+    });
+
+    return data;
+}
+
+function exportFilteredJSON() {
+    const data = getVisibleTableData();
+    if (data.length === 0) return alert("Tidak ada data yang tampil");
+
+    const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "data_siswa_filtered.json";
+    a.click();
+    URL.revokeObjectURL(url);
+}
+
+function exportFilteredExcel() {
+    const data = getVisibleTableData();
+    if (data.length === 0) return alert("Tidak ada data yang tampil");
+
+    const worksheet = XLSX.utils.json_to_sheet(data);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Data Siswa");
+
+    XLSX.writeFile(workbook, "data_siswa_filtered.xlsx");
+}
+
+
 // ===== Hapus semua riwayat =====
 function hapusRiwayat(){
     if(confirm("Yakin ingin menghapus seluruh riwayat?")){
@@ -488,5 +553,8 @@ filterKelas.oninput=tampilkanData;
 tampilkanHome();
 tampilkanData();
 </script>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+
 </body>
 </html>
