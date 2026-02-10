@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <title>Data Siswa SMP</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; }
+        table { border-collapse: collapse; width: 100%; margin-top: 10px; }
+        th, td { border: 1px solid #ccc; padding: 6px; }
+        th { background: #f0f0f0; }
+        td.editable { cursor: pointer; }
+        td.editing { background: #fffbe6; outline: 2px solid #4caf50; }
+        #status { margin: 10px 0; color: #2e7d32; font-weight: bold; display: none; }
+        #importRaw { margin-top: 5px; }
+        input, select, button { margin: 5px 0; padding: 4px; }
+    </style>
+</head>
+<body>
+
+<h2>Import Data Siswa</h2>
+
+<!-- Dropdown untuk pilih mode import -->
+<select id="importMode">
+    <option value="file" selected>Import Manual (File JSON)</option>
+    <option value="raw">Import Raw (URL / GitHub)</option>
+</select>
+
+<!-- Import manual -->
+<div id="importFile">
+    <input type="file" id="fileJson" accept=".json">
+</div>
+
+<!-- Import raw (URL) -->
+<div id="importRaw" style="display:none;">
+    <input type="text" id="rawUrl" style="width:70%"
+           placeholder="https://raw.githubusercontent.com/.../siswa.json">
+</div>
+
+<button onclick="importData()">Import</button>
+<button onclick="resetData()">Reset</button>
+
+<div id="status">✔ Data tersimpan</div>
+
+<hr>
+
+<h3>Filter</h3>
+<select id="filterJK">
+    <option value="">Semua JK</option>
+    <option value="L">L</option>
+    <option value="P">P</option>
+</select>
+<input id="filterKelas" placeholder="Kelas (VII / VIII / IX)">
+
+<table>
+    <thead>
+        <tr>
+            <th>No</th>
+            <th>Nama</th>
+            <th>JK</th>
+            <th>Kelas</th>
+            <th>NISN</th>
+            <th>Tempat Lahir</th>
+            <th>Tanggal Lahir</th>
+            <th>NIK Lainnya</th>
+        </tr>
+    </thead>
+    <tbody id="tabelSiswa"></tbody>
+</table>
+
+<script>
+let dataSiswa = JSON.parse(localStorage.getItem("dataSiswa")) || [];
+let timerStatus;
+
+const statusEl = document.getElementById("status");
+const filterJK = document.getElementById("filterJK");
+const filterKelas = document.getElementById("filterKelas");
+
+const importMode = document.getElementById("importMode");
+const importFile = document.getElementById("importFile");
+const importRaw = document.getElementById("importRaw");
+
+importMode.onchange = () => {
+    if (importMode.value === "file") {
+        importFile.style.display = "block";
+        importRaw.style.display = "none";
+    } else {
+        importFile.style.display = "none";
+        importRaw.style.display = "block";
+    }
+};
+
+// Auto filter ketika filter diubah
+filterJK.onchange = tampilkanData;
+filterKelas.oninput = tampilkanData;
+
+// Tampilkan status tersimpan
+function showStatus() {
+    clearTimeout(timerStatus);
+    statusEl.style.display = "block";
+    timerStatus = setTimeout(() => {
+        statusEl.style.display = "none";
+    }, 2000);
+}
+
+// Import data sesuai mode
+function importData() {
+    if (importMode.value === "file") {
+        importFromFile();
+    } else {
+        importFromRaw();
+    }
+}
+
+// Import dari file JSON
+function importFromFile() {
+    const file = fileJson.files[0];
+    if (!file) return alert("Pilih file JSON");
+
+    const reader = new FileReader();
+    reader.onload = e => {
+        try {
+            const json = JSON.parse(e.target.result);
+            if (!Array.isArray(json)) throw "Format JSON harus array";
+
+            dataSiswa = json;
+            localStorage.setItem("dataSiswa", JSON.stringify(dataSiswa));
+            tampilkanData();
+            showStatus();
+        } catch (err) {
+            alert(err);
+        }
+    };
+    reader.readAsText(file);
+}
+
+// Import dari raw URL (GitHub)
+function importFromRaw() {
+    const url = rawUrl.value.trim();
+    if (!url) return alert("Masukkan URL raw");
+
+    fetch(url)
+        .then(res => {
+            if (!res.ok) throw "Gagal fetch data";
+            return res.json();
+        })
+        .then(json => {
+            if (!Array.isArray(json)) throw "Format JSON harus array";
+
+            dataSiswa = json;
+            localStorage.setItem("dataSiswa", JSON.stringify(dataSiswa));
+            tampilkanData();
+            showStatus();
+        })
+        .catch(err => alert(err));
+}
+
+// Reset semua data
+function resetData() {
+    if (confirm("Hapus semua data?")) {
+        localStorage.removeItem("dataSiswa");
+        dataSiswa = [];
+        tampilkanData();
+    }
+}
+
+// Enable editing saat double-click
+function enableEdit(td, index, field) {
+    td.contentEditable = true;
+    td.classList.add("editing");
+    td.focus();
+
+    td.onblur = () => {
+        td.contentEditable = false;
+        td.classList.remove("editing");
+        dataSiswa[index][field] = td.innerText.trim();
+        localStorage.setItem("dataSiswa", JSON.stringify(dataSiswa));
+        showStatus();
+        tampilkanData(); // refresh filter
+    };
+}
+
+// Tampilkan tabel
+function tampilkanData() {
+    const tbody = document.getElementById("tabelSiswa");
+    tbody.innerHTML = "";
+
+    const fJK = filterJK.value;
+    const fKelas = filterKelas.value.toLowerCase();
+
+    dataSiswa
+        .filter(s =>
+            (fJK === "" || s.jk === fJK) &&
+            (fKelas === "" || s.kelas.toLowerCase().includes(fKelas))
+        )
+        .forEach((s, i) => {
+            tbody.innerHTML += `
+            <tr>
+                <td>${i + 1}</td>
+                <td class="editable" ondblclick="enableEdit(this, ${i}, 'nama')">${s.nama}</td>
+                <td class="editable" ondblclick="enableEdit(this, ${i}, 'jk')">${s.jk}</td>
+                <td class="editable" ondblclick="enableEdit(this, ${i}, 'kelas')">${s.kelas}</td>
+                <td class="editable" ondblclick="enableEdit(this, ${i}, 'nisn')">${s.nisn}</td>
+                <td class="editable" ondblclick="enableEdit(this, ${i}, 'tempatLahir')">${s.tempatLahir}</td>
+                <td class="editable" ondblclick="enableEdit(this, ${i}, 'tanggalLahir')">${s.tanggalLahir}</td>
+                <td class="editable" ondblclick="enableEdit(this, ${i}, 'nik')">${s.nik}</td>
+            </tr>`;
+        });
+}
+
+// Inisialisasi tabel saat load
+tampilkanData();
+</script>
+
+</body>
+</html>
