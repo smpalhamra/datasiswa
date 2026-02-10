@@ -1,0 +1,110 @@
+[
+  {
+    "nama": "Ahmad Fauzi",
+    "jk": "L",
+    "kelas": "VII A",
+    "nisn": "200001",
+    "tempatLahir": "Jakarta",
+    "tanggalLahir": "2011-02-14",
+    "nik": "3174021402110001"
+  },
+  {
+    "nama": "Salsabila Putri",
+    "jk": "P",
+    "kelas": "VII A",
+    "nisn": "200002",
+    "tempatLahir": "Depok",
+    "tanggalLahir": "2011-05-21",
+    "nik": "3276012105110002"
+  },
+  {
+    "nama": "Rizky Maulana",
+    "jk": "L",
+    "kelas": "VII B",
+    "nisn": "200003",
+    "tempatLahir": "Bogor",
+    "tanggalLahir": "2011-09-03",
+    "nik": "3271020309110003"
+  },
+  {
+    "nama": "Nadia Azzahra",
+    "jk": "P",
+    "kelas": "VII B",
+    "nisn": "200004",
+    "tempatLahir": "Bandung",
+    "tanggalLahir": "2011-11-18",
+    "nik": "3204111811110004"
+  },
+  {
+    "nama": "Fahri Ramadhan",
+    "jk": "L",
+    "kelas": "VIII A",
+    "nisn": "200005",
+    "tempatLahir": "Cirebon",
+    "tanggalLahir": "2010-01-09",
+    "nik": "3209010901100005"
+  },
+  {
+    "nama": "Aisyah Nurhaliza",
+    "jk": "P",
+    "kelas": "VIII A",
+    "nisn": "200006",
+    "tempatLahir": "Tasikmalaya",
+    "tanggalLahir": "2010-04-27",
+    "nik": "3210272704100006"
+  },
+  {
+    "nama": "Daffa Pratama",
+    "jk": "L",
+    "kelas": "VIII B",
+    "nisn": "200007",
+    "tempatLahir": "Semarang",
+    "tanggalLahir": "2010-08-15",
+    "nik": "3374081508100007"
+  },
+  {
+    "nama": "Zahra Khairunnisa",
+    "jk": "P",
+    "kelas": "VIII B",
+    "nisn": "200008",
+    "tempatLahir": "Solo",
+    "tanggalLahir": "2010-12-02",
+    "nik": "3311020212100008"
+  },
+  {
+    "nama": "Iqbal Prasetyo",
+    "jk": "L",
+    "kelas": "IX A",
+    "nisn": "200009",
+    "tempatLahir": "Yogyakarta",
+    "tanggalLahir": "2009-03-11",
+    "nik": "3404111103090009"
+  },
+  {
+    "nama": "Nabila Safitri",
+    "jk": "P",
+    "kelas": "IX A",
+    "nisn": "200010",
+    "tempatLahir": "Malang",
+    "tanggalLahir": "2009-06-25",
+    "nik": "3507252506090010"
+  },
+  {
+    "nama": "Bagas Wijaya",
+    "jk": "L",
+    "kelas": "IX B",
+    "nisn": "200011",
+    "tempatLahir": "Kediri",
+    "tanggalLahir": "2009-09-07",
+    "nik": "3506090709090011"
+  },
+  {
+    "nama": "Putri Anindya",
+    "jk": "P",
+    "kelas": "IX B",
+    "nisn": "200012",
+    "tempatLahir": "Madiun",
+    "tanggalLahir": "2009-12-19",
+    "nik": "3512191912090012"
+  }
+]
