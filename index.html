@@ -139,15 +139,17 @@ td.editing {
 
 <!-- HOME -->
 <div id="home" class="page active">
-  <h2>Selamat datang 👋</h2>
-  <p>Data siswa tersimpan di browser:</p>
+<h2>Selamat datang 👋</h2>
+  <h2>Statistik Siswa 📊</h2>
   <div class="table-wrapper">
     <table>
-      <thead id="theadHome"></thead>
-      <tbody id="tabelHome"></tbody>
+      <thead id="theadStatistik"></thead>
+      <tbody id="tabelStatistik"></tbody>
     </table>
   </div>
 </div>
+
+
 
 <!-- KELOLA -->
 <div id="kelola" class="page">
@@ -491,35 +493,76 @@ function tampilkanData(){
 }
 
 function tampilkanHome(){
-    const tbody = document.getElementById("tabelHome");
-    const thead = document.getElementById("theadHome");
+    const thead = document.getElementById("theadStatistik");
+    const tbody = document.getElementById("tabelStatistik");
+
     tbody.innerHTML = "";
 
-    // Header tetap (tanpa kolom tambahan)
-    thead.innerHTML = `<tr>
-        <th>No</th>
-        <th>Nama</th>
-        <th>JK</th>
-        <th>Kelas</th>
-        <th>NISN</th>
-        <th>Tempat Lahir</th>
-        <th>Tanggal Lahir</th>
-        <th>NIK</th>
-    </tr>`;
+    // Header tabel
+    thead.innerHTML = `
+        <tr>
+            <th>No</th>
+            <th>Kelas</th>
+            <th>L</th>
+            <th>P</th>
+            <th>Jumlah</th>
+        </tr>
+    `;
 
-    dataSiswa.forEach((s,i)=>{
-        tbody.innerHTML += `<tr>
-            <td>${i+1}</td>
-            <td>${s.nama||''}</td>
-            <td>${s.jk||''}</td>
-            <td>${s.kelas||''}</td>
-            <td>${s.nisn||''}</td>
-            <td>${s.tempatLahir||''}</td>
-            <td>${s.tanggalLahir||''}</td>
-            <td>${s.nik||''}</td>
-        </tr>`;
+    // Kelompokkan data per kelas
+    let statistik = {};
+
+    dataSiswa.forEach(s=>{
+        const kelas = (s.kelas || "").trim().toUpperCase();
+        const jk = (s.jk || "").trim().toUpperCase();
+
+        if(!kelas) return;
+
+        if(!statistik[kelas]){
+            statistik[kelas] = { L:0, P:0 };
+        }
+
+        if(jk === "L") statistik[kelas].L++;
+        if(jk === "P") statistik[kelas].P++;
     });
+
+    let no = 1;
+    let totalL = 0;
+    let totalP = 0;
+    let totalSemua = 0;
+
+    Object.keys(statistik).sort().forEach(kelas=>{
+        const L = statistik[kelas].L;
+        const P = statistik[kelas].P;
+        const jumlah = L + P;
+
+        totalL += L;
+        totalP += P;
+        totalSemua += jumlah;
+
+        tbody.innerHTML += `
+            <tr>
+                <td>${no++}</td>
+                <td>${kelas}</td>
+                <td>${L}</td>
+                <td>${P}</td>
+                <td><strong>${jumlah}</strong></td>
+            </tr>
+        `;
+    });
+
+    // Baris total
+    tbody.innerHTML += `
+        <tr style="background:#eef6ff;font-weight:bold;">
+            <td colspan="2">TOTAL</td>
+            <td>${totalL}</td>
+            <td>${totalP}</td>
+            <td>${totalSemua}</td>
+        </tr>
+    `;
 }
+
+
 
 function tampilkanRiwayat(){
     const tbody=document.getElementById("tabelRiwayat");
