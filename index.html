@@ -6,191 +6,125 @@
 <title>Pengelolaan Data Siswa</title>
 
 <style>
-* { box-sizing: border-box; margin: 0; padding: 0; }
+*{box-sizing:border-box;margin:0;padding:0}
 
-body {
-  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-  background: #f4f6f8;
-  padding: 16px;
-  color: #333;
+body{
+  font-family:system-ui,-apple-system,"Segoe UI",sans-serif;
+  background:linear-gradient(180deg,#f4f6f8,#eef3f7);
+  padding:16px;
+  color:#333;
 }
 
-header {
-  font-size: 1.6rem;
-  font-weight: 700;
-  text-align: center;
-  margin-bottom: 16px;
-  color: #2c3e50;
+header{
+  font-size:1.6rem;
+  font-weight:700;
+  text-align:center;
+  margin-bottom:16px;
+  color:#2c3e50;
 }
 
-nav {
-  display: flex;
-  gap: 8px;
-  justify-content: center;
-  flex-wrap: wrap;
-  margin-bottom: 16px;
+/* ===== NAV ===== */
+nav{
+  display:flex;
+  gap:8px;
+  justify-content:center;
+  flex-wrap:wrap;
+  margin-bottom:16px;
 }
 
-nav a {
-  flex: 1;
-  min-width: 90px;
-  text-align: center;
-  padding: 10px 12px;
-  background: #3498db;
-  color: #fff;
-  border-radius: 6px;
-  text-decoration: none;
-  font-weight: 600;
+nav a{
+  padding:10px 14px;
+  background:#3498db;
+  color:#fff;
+  border-radius:6px;
+  font-weight:600;
+  cursor:pointer;
+  text-decoration:none;
+}
+
+nav a:hover{background:#1d6fa5}
+
+/* ===== PAGE WRAP GLOBAL ===== */
+.kelola-wrap{
+  max-width:1000px;
+  margin:auto;
+}
+
+.page{display:none}
+.page.active{display:block}
+
+/* ===== CARD UMUM ===== */
+.home-card,.kelola-card{
+  background:#fff;
+  border-radius:14px;
+  padding:16px 18px;
+  margin-bottom:16px;
+  box-shadow:0 6px 18px rgba(0,0,0,.08);
+}
+
+.kelola-card h3{
+  font-size:14px;
+  margin-bottom:10px;
+  color:#111827;
+}
+
+/* ===== FORM ===== */
+select,input,button{
+  padding:10px;
+  margin:6px 0;
+  font-size:14px;
+  border-radius:6px;
+}
+
+input,select{border:1px solid #ccc}
+button{
+  border:none;
+  background:#3498db;
+  color:#fff;
+  font-weight:600;
   cursor:pointer;
 }
+button:hover{background:#1d6fa5}
 
-nav a:hover { background: #1d6fa5; }
-
-.page { display: none; }
-.page.active { display: block; }
-
-.page h2 { margin-bottom: 8px; }
-.page p { margin-bottom: 12px; }
-
-select,input,button {
-  width: 100%;
-  padding: 10px;
-  margin: 6px 0;
-  font-size: 14px;
-  border-radius: 6px;
+/* ===== TABEL UMUM ===== */
+.table-wrapper{
+  overflow-x:auto;
+  margin-top:12px;
+  background:#fff;
+  border-radius:8px;
+  box-shadow:0 2px 6px rgba(0,0,0,.08);
 }
 
-input, select { border: 1px solid #ccc; }
-
-button {
-  border: none;
-  background: #3498db;
-  color: white;
-  font-weight: 600;
-  cursor: pointer;
+table{
+  width:100%;
+  border-collapse:collapse;
+  min-width:900px;
 }
 
-button:hover { background: #1d6fa5; }
-button:active { background: #144d73; }
-
-#status {
-  margin: 10px 0;
-  color: #2e7d32;
-  font-weight: bold;
-  display: none;
+th,td{
+  padding:8px 10px;
+  border:1px solid #ddd;
+  font-size:13px;
 }
 
-.table-wrapper {
-  overflow-x: auto;
-  margin-top: 12px;
-  background: white;
-  border-radius: 8px;
-  box-shadow: 0 2px 6px rgba(0,0,0,.08);
+th{
+  background:#3498db;
+  color:#fff;
+  text-transform:uppercase;
 }
 
-table {
-  width: 100%;
-  border-collapse: collapse;
-  min-width: 900px;
-}
+td.editable{cursor:pointer}
+td.editable:hover{background:#eef6ff}
+td.editing{background:#fffbe6;outline:2px solid #2ecc71}
 
-th, td {
-  padding: 8px 10px;
-  border: 1px solid #ddd;
-  text-align: left;
-  font-size: 13px;
-}
+/* ===== STATISTIK HOME KHUSUS ===== */
+#home table{min-width:unset}
+#home .table-wrapper{overflow-x:hidden}
+#home th,#home td{text-align:center;padding:6px 8px}
+#home th:nth-child(2),#home td:nth-child(2){text-align:left}
+#home th:first-child,#home td:first-child{width:40px}
 
-th {
-  background: #3498db;
-  color: white;
-  text-transform: uppercase;
-}
-
-td.editable { cursor: pointer; }
-td.editable:hover { background: #eef6ff; }
-
-td.editing {
-  background: #fffbe6;
-  outline: 2px solid #2ecc71;
-}
-
-#riwayatTable th { background: #2c3e50; }
-
-@media (min-width: 768px) {
-  body { padding: 24px; }
-  nav a { flex: unset; min-width: 120px; }
-  select, input, button { width: auto; }
-  .form-row { display: flex; gap: 8px; flex-wrap: wrap; }
-}
-/* ================= PROFIL SISWA MODERN ================= */
-
-.profil-header {
-  background: linear-gradient(135deg, #3498db, #6dd5fa);
-  color: white;
-  padding: 20px;
-  border-radius: 12px;
-  margin-bottom: 16px;
-  box-shadow: 0 4px 10px rgba(0,0,0,.1);
-}
-
-.profil-nama {
-  font-size: 22px;
-  font-weight: 700;
-  margin-bottom: 6px;
-}
-
-.profil-sub {
-  font-size: 14px;
-  opacity: .95;
-}
-
-.profil-section {
-  background: white;
-  border-radius: 12px;
-  padding: 14px 16px;
-  margin-bottom: 14px;
-  box-shadow: 0 2px 8px rgba(0,0,0,.06);
-}
-
-.profil-section h4 {
-  font-size: 14px;
-  text-transform: uppercase;
-  margin-bottom: 10px;
-  color: #3498db;
-  border-bottom: 2px solid #eef3f7;
-  padding-bottom: 6px;
-}
-
-.profil-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px,1fr));
-  gap: 10px 16px;
-}
-
-.profil-field {
-  font-size: 13px;
-}
-
-.profil-label {
-  font-size: 11px;
-  color: #777;
-  margin-bottom: 2px;
-}
-
-.profil-value {
-  background: #f7f9fb;
-  padding: 6px 8px;
-  border-radius: 6px;
-  border: 1px solid #e3e8ee;
-  font-weight: 600;
-}
-
-.profil-value.editing {
-  background: #fffbe6;
-  outline: 2px solid #2ecc71;
-}
-
+/* ===== PROFIL SISWA ===== */
 .profil-card{
   max-width:720px;
   margin:auto;
@@ -211,27 +145,15 @@ td.editing {
 }
 
 .profil-foto{
-  width:80px;
-  height:80px;
+  width:80px;height:80px;
   border-radius:12px;
   background:#e5e7eb;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  font-size:32px;
-  font-weight:bold;
-  color:#6b7280;
+  display:flex;align-items:center;justify-content:center;
+  font-size:32px;font-weight:bold;color:#6b7280;
 }
 
-.profil-nama{
-  font-size:20px;
-  font-weight:700;
-}
-
-.profil-sub{
-  color:#6b7280;
-  margin-top:4px;
-}
+.profil-nama{font-size:20px;font-weight:700}
+.profil-sub{color:#6b7280;margin-top:4px}
 
 .profil-section{
   padding:16px 18px;
@@ -251,9 +173,7 @@ td.editing {
   border-bottom:1px dashed #f1f5f9;
 }
 
-.profil-row span:first-child{
-  color:#6b7280;
-}
+.profil-row span:first-child{color:#6b7280}
 
 .profil-actions{
   display:flex;
@@ -261,10 +181,12 @@ td.editing {
   padding:16px;
 }
 
-.profil-actions button{
-  flex:1;
-}
+.profil-actions button{flex:1}
 
+/* ===== RESPONSIVE ===== */
+@media (min-width:768px){
+  body{padding:24px}
+}
 
 </style>
 </head>
@@ -280,83 +202,101 @@ td.editing {
   <a id="menuProfil" style="display:none;" onclick="showPage('profil')">Profil</a>
 </nav>
 
+
 <!-- HOME -->
 <div id="home" class="page active">
-<h2>Selamat datang 👋</h2>
-  <h2>Statistik Siswa 📊</h2>
-  <div class="table-wrapper">
-    <table>
-      <thead id="theadStatistik"></thead>
-      <tbody id="tabelStatistik"></tbody>
-    </table>
+  <div class="kelola-wrap">
+
+    <div class="home-card">
+      <h2>Selamat datang 👋</h2>
+      <p>Sistem Pengelolaan Data Siswa</p>
+    </div>
+
+    <div class="home-card">
+      <h2>Statistik Siswa 📊</h2>
+      <div class="table-wrapper">
+        <table>
+          <thead id="theadStatistik"></thead>
+          <tbody id="tabelStatistik"></tbody>
+        </table>
+      </div>
+    </div>
+
   </div>
 </div>
-
 
 
 <!-- KELOLA -->
 <div id="kelola" class="page">
-  <h2>Kelola Data Siswa</h2>
+  <div class="kelola-wrap">
 
-  <div class="form-row">
-	
-	<select id="importMode">
-	  <option value="file" selected>Import File JSON</option>
-	  <option value="raw">Import URL (Raw)</option>
-	  <option value="csv">Import CSV / Excel Dapodik</option>
-	</select>
+    <!-- IMPORT -->
+    <div class="kelola-card">
+      <h3>IMPORT DATA</h3>
 
+      <select id="importMode">
+        <option value="file" selected>Import File JSON</option>
+        <option value="raw">Import URL (Raw)</option>
+        <option value="csv">Import CSV / Excel Dapodik</option>
+      </select>
 
-    <div id="importFile">
-      <input type="file" id="fileJson" accept=".json">
+      <div id="importFile">
+        <input type="file" id="fileJson" accept=".json">
+      </div>
+
+      <div id="importRaw" style="display:none;">
+        <input type="text" id="rawUrl"
+        value="https://raw.githubusercontent.com/smpalhamra/datasiswa/refs/heads/main/db/dasis.json">
+      </div>
+
+      <div id="importCSV" style="display:none;">
+        <input type="file" id="fileCSV" accept=".csv,.xlsx,.xls">
+      </div>
+
+      <div class="kelola-actions">
+        <button onclick="importData()">Import</button>
+        <button onclick="exportData()">Ekspor</button>
+        <button onclick="exportFilteredJSON()">Ekspor JSON (Tampil)</button>
+        <button onclick="exportFilteredExcel()">Ekspor Excel (Tampil)</button>
+        <button onclick="resetData()">Reset</button>
+      </div>
+
+      <div id="status">✔ Data tersimpan</div>
     </div>
 
-    <div id="importRaw" style="display:none;">
-      <input type="text" id="rawUrl"
-      value="https://raw.githubusercontent.com/smpalhamra/datasiswa/refs/heads/main/db/dasis.json">
+    <!-- FILTER -->
+    <div class="kelola-card">
+      <h3>FILTER DATA</h3>
+      <div class="kelola-actions">
+        <select id="filterJK">
+          <option value="">Semua JK</option>
+          <option value="L">L</option>
+          <option value="P">P</option>
+        </select>
+
+        <select id="filterKelas">
+          <option value="">Semua Kelas</option>
+          <option value="VII">VII</option>
+          <option value="VIII">VIII</option>
+          <option value="IX">IX</option>
+        </select>
+      </div>
     </div>
-  </div>
-  
-	  <div id="importCSV" style="display:none;">
-	  <input type="file" id="fileCSV" accept=".csv,.xlsx,.xls">
-	</div>
 
+    <!-- TABEL -->
+    <div class="kelola-card">
+      <h3>DATA SISWA</h3>
+      <div class="table-wrapper">
+        <table>
+          <thead id="theadSiswa"></thead>
+          <tbody id="tabelSiswa"></tbody>
+        </table>
+      </div>
+    </div>
 
-  <div class="form-row">
-    <button onclick="importData()">Import</button>
-    <button onclick="exportData()">Ekspor</button>
-    <button onclick="exportFilteredJSON()">Ekspor JSON (Tampil)</button>
-    <button onclick="exportFilteredExcel()">Ekspor Excel (Tampil)</button>
-    <button onclick="resetData()">Reset</button>
-  </div>
-
-  <div id="status">✔ Data tersimpan</div>
-
-  <hr>
-
-  <h3>Filter</h3>
-  <div class="form-row">
-    <select id="filterJK">
-      <option value="">Semua JK</option>
-      <option value="L">L</option>
-      <option value="P">P</option>
-    </select>
-	<select id="filterKelas">
-	  <option value="">Semua Kelas</option>
-	  <option value="VII">VII</option>
-	  <option value="VIII">VIII</option>
-	  <option value="IX">IX</option>
-	</select>
-
-  </div>
-
-  <div class="table-wrapper">
-    <table>
-      <thead id="theadSiswa"></thead>
-      <tbody id="tabelSiswa"></tbody>
-    </table>
   </div>
 </div>
+
 
 <!-- RIWAYAT -->
 <div id="riwayat" class="page">
@@ -784,7 +724,6 @@ function tampilkanHome(){
         </tr>
     `;
 }
-
 
 
 function tampilkanRiwayat(){
