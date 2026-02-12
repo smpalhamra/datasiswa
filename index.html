@@ -95,11 +95,28 @@ button:hover{background:#1d6fa5}
   box-shadow:0 2px 6px rgba(0,0,0,.08);
 }
 
+/* ===== TABEL RESPONSIVE CERDAS ===== */
 table{
   width:100%;
   border-collapse:collapse;
-  min-width:900px;
+  table-layout:fixed; /* bikin kolom patuh lebar */
 }
+
+th,td{
+  padding:8px 10px;
+  border:1px solid #ddd;
+  font-size:13px;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+}
+
+th{
+  background:#3498db;
+  color:#fff;
+  text-transform:uppercase;
+}
+
 
 th,td{
   padding:8px 10px;
@@ -264,6 +281,34 @@ td.aksi{
   border-radius:6px;
   line-height:1.2;
 }
+
+/* ===== KOLOM DATA SISWA ===== */
+#kelola table th:nth-child(1),
+#kelola table td:nth-child(1){width:40px;text-align:center;}
+
+#kelola table th:nth-child(2),
+#kelola table td:nth-child(2){width:160px;} /* Nama */
+
+#kelola table th:nth-child(3),
+#kelola table td:nth-child(3){width:50px;text-align:center;} /* JK */
+
+#kelola table th:nth-child(4),
+#kelola table td:nth-child(4){width:70px;text-align:center;} /* Kelas */
+
+#kelola table th:nth-child(5),
+#kelola table td:nth-child(5){width:110px;} /* NISN */
+
+#kelola table th:nth-child(6),
+#kelola table td:nth-child(6){width:120px;} /* Tempat lahir */
+
+#kelola table th:nth-child(7),
+#kelola table td:nth-child(7){width:110px;} /* Tanggal */
+
+#kelola table th:nth-child(8),
+#kelola table td:nth-child(8){width:140px;} /* NIK */
+
+#kelola table th:nth-child(9),
+#kelola table td:nth-child(9){width:90px;text-align:center;} /* Aksi */
 
 
 </style>
