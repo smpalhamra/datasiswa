@@ -345,6 +345,59 @@ function exportData(){
     URL.revokeObjectURL(url);
 }
 
+function exportFilteredJSON(){
+    const fJK = filterJK.value.trim().toUpperCase();
+    const fKelas = filterKelas.value.trim().toUpperCase();
+
+    const dataFilter = dataSiswa.filter(s=>{
+        const jk = (s.jk || "").trim().toUpperCase();
+        const kelas = (s.kelas || "").trim().toUpperCase();
+
+        return (
+            (fJK === "" || jk === fJK) &&
+            (fKelas === "" || kelas === fKelas)
+        );
+    });
+
+    const dataStr = JSON.stringify(dataFilter, null, 2);
+    const blob = new Blob([dataStr], {type:"application/json"});
+    const url = URL.createObjectURL(blob);
+
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "data_siswa_filtered.json";
+    a.click();
+
+    URL.revokeObjectURL(url);
+}
+
+function exportFilteredExcel(){
+    const fJK = filterJK.value.trim().toUpperCase();
+    const fKelas = filterKelas.value.trim().toUpperCase();
+
+    const dataFilter = dataSiswa.filter(s=>{
+        const jk = (s.jk || "").trim().toUpperCase();
+        const kelas = (s.kelas || "").trim().toUpperCase();
+
+        return (
+            (fJK === "" || jk === fJK) &&
+            (fKelas === "" || kelas === fKelas)
+        );
+    });
+
+    if(dataFilter.length === 0){
+        alert("Tidak ada data untuk diekspor");
+        return;
+    }
+
+    const worksheet = XLSX.utils.json_to_sheet(dataFilter);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Data Siswa");
+
+    XLSX.writeFile(workbook, "data_siswa_filtered.xlsx");
+}
+
+
 function enableEdit(td,index,field){
     td.contentEditable=true;
     td.classList.add("editing");
