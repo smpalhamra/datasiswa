@@ -1,0 +1,1016 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Pengelolaan Data Siswa</title>
+
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+
+body{
+  font-family:system-ui,-apple-system,"Segoe UI",sans-serif;
+  background:linear-gradient(180deg,#f4f6f8,#eef3f7);
+  padding:16px;
+  color:#333;
+}
+
+header{
+  font-size:1.6rem;
+  font-weight:700;
+  text-align:center;
+  margin-bottom:16px;
+  color:#2c3e50;
+}
+
+/* ===== NAV ===== */
+nav{
+  display:flex;
+  gap:8px;
+  justify-content:center;
+  flex-wrap:wrap;
+  margin-bottom:16px;
+}
+
+nav a{
+  padding:10px 14px;
+  background:#3498db;
+  color:#fff;
+  border-radius:6px;
+  font-weight:600;
+  cursor:pointer;
+  text-decoration:none;
+}
+
+nav a:hover{background:#1d6fa5}
+
+/* ===== PAGE WRAP GLOBAL ===== */
+.kelola-wrap{
+  max-width:1000px;
+  margin:auto;
+}
+
+.page{display:none}
+.page.active{display:block}
+
+/* ===== CARD UMUM ===== */
+.home-card,.kelola-card{
+  background:#fff;
+  border-radius:14px;
+  padding:16px 18px;
+  margin-bottom:16px;
+  box-shadow:0 6px 18px rgba(0,0,0,.08);
+}
+
+.kelola-card h3{
+  font-size:14px;
+  margin-bottom:10px;
+  color:#111827;
+}
+
+/* ===== FORM ===== */
+select,input,button{
+  padding:10px;
+  margin:6px 0;
+  font-size:14px;
+  border-radius:6px;
+}
+
+input,select{border:1px solid #ccc}
+button{
+  border:none;
+  background:#3498db;
+  color:#fff;
+  font-weight:600;
+  cursor:pointer;
+}
+button:hover{background:#1d6fa5}
+
+/* ===== TABEL UMUM ===== */
+.table-wrapper{
+  overflow-x:auto;
+  margin-top:12px;
+  background:#fff;
+  border-radius:8px;
+  box-shadow:0 2px 6px rgba(0,0,0,.08);
+}
+
+table{
+  width:100%;
+  border-collapse:collapse;
+  min-width:900px;
+}
+
+th,td{
+  padding:8px 10px;
+  border:1px solid #ddd;
+  font-size:13px;
+}
+
+th{
+  background:#3498db;
+  color:#fff;
+  text-transform:uppercase;
+}
+
+td.editable{cursor:pointer}
+td.editable:hover{background:#eef6ff}
+td.editing{background:#fffbe6;outline:2px solid #2ecc71}
+
+/* ===== STATISTIK HOME KHUSUS ===== */
+#home table{min-width:unset}
+#home .table-wrapper{overflow-x:hidden}
+#home th,#home td{text-align:center;padding:6px 8px}
+#home th:nth-child(2),#home td:nth-child(2){text-align:left}
+#home th:first-child,#home td:first-child{width:40px}
+
+/* ===== PROFIL SISWA ===== */
+.profil-card{
+  max-width:720px;
+  margin:auto;
+  background:#fff;
+  border-radius:14px;
+  box-shadow:0 6px 18px rgba(0,0,0,.08);
+  overflow:hidden;
+  font-size:14px;
+}
+
+.profil-header{
+  display:flex;
+  align-items:center;
+  gap:16px;
+  padding:18px;
+  background:#f8fafc;
+  border-bottom:1px solid #e5e7eb;
+}
+
+.profil-foto{
+  width:80px;height:80px;
+  border-radius:12px;
+  background:#e5e7eb;
+  display:flex;align-items:center;justify-content:center;
+  font-size:32px;font-weight:bold;color:#6b7280;
+}
+
+.profil-nama{font-size:20px;font-weight:700}
+.profil-sub{color:#6b7280;margin-top:4px}
+
+.profil-section{
+  padding:16px 18px;
+  border-bottom:1px solid #f1f5f9;
+}
+
+.profil-section h3{
+  font-size:14px;
+  margin-bottom:10px;
+  color:#111827;
+}
+
+.profil-row{
+  display:flex;
+  justify-content:space-between;
+  padding:6px 0;
+  border-bottom:1px dashed #f1f5f9;
+}
+
+.profil-row span:first-child{color:#6b7280}
+
+.profil-actions{
+  display:flex;
+  gap:12px;
+  padding:16px;
+}
+
+.profil-actions button{flex:1}
+
+/* ===== RESPONSIVE ===== */
+@media (min-width:768px){
+  body{padding:24px}
+}
+
+/* ===== RIWAYAT MODERN ===== */
+.riwayat-header{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  gap:10px;
+  margin-bottom:12px;
+}
+
+.riwayat-header h2{
+  font-size:18px;
+  margin-bottom:2px;
+}
+
+.riwayat-header p{
+  font-size:12px;
+  color:#6b7280;
+}
+
+.btn-danger{
+  background:#e74c3c;
+}
+.btn-danger:hover{
+  background:#c0392b;
+}
+
+.riwayat-table table{
+  min-width:unset;
+}
+
+.riwayat-table th:nth-child(1),
+.riwayat-table td:nth-child(1){
+  width:40px;
+  text-align:center;
+}
+
+.riwayat-table th:nth-child(2),
+.riwayat-table td:nth-child(2){
+  width:160px;
+  font-size:12px;
+}
+
+.riwayat-table td:nth-child(4){
+  text-align:center;
+}
+
+.riwayat-table button{
+  padding:4px 8px;
+  font-size:12px;
+}
+
+.riwayat-kosong{
+  text-align:center;
+  padding:16px;
+  color:#888;
+  font-style:italic;
+}
+
+/* ===== KOLOM AKSI ===== */
+td.aksi{
+  white-space:nowrap;
+}
+
+.aksi-wrap{
+  display:flex;
+  gap:6px;
+  justify-content:center;
+  align-items:center;
+}
+
+.aksi-wrap button{
+  padding:4px 8px;
+  font-size:12px;
+  border-radius:6px;
+  line-height:1.2;
+}
+
+
+</style>
+</head>
+
+<body>
+
+<header>Pengelolaan Data Siswa</header>
+
+<nav>
+  <a onclick="showPage('home')">Home</a>
+  <a onclick="showPage('kelola')">Kelola</a>
+  <a onclick="showPage('riwayat')">Riwayat</a>
+  <a id="menuProfil" style="display:none;" onclick="showPage('profil')">Profil</a>
+</nav>
+
+
+<!-- HOME -->
+<div id="home" class="page active">
+  <div class="kelola-wrap">
+
+    <div class="home-card">
+      <h2>Selamat datang 👋</h2>
+      <p>Sistem Pengelolaan Data Siswa</p>
+    </div>
+
+    <div class="home-card">
+      <h2>Statistik Siswa 📊</h2>
+      <div class="table-wrapper">
+        <table>
+          <thead id="theadStatistik"></thead>
+          <tbody id="tabelStatistik"></tbody>
+        </table>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+
+<!-- KELOLA -->
+<div id="kelola" class="page">
+  <div class="kelola-wrap">
+
+    <!-- IMPORT -->
+    <div class="kelola-card">
+      <h3>IMPORT DATA</h3>
+
+      <select id="importMode">
+        <option value="file" selected>Import File JSON</option>
+        <option value="raw">Import URL (Raw)</option>
+        <option value="csv">Import CSV / Excel Dapodik</option>
+      </select>
+
+      <div id="importFile">
+        <input type="file" id="fileJson" accept=".json">
+      </div>
+
+      <div id="importRaw" style="display:none;">
+        <input type="text" id="rawUrl"
+        value="https://raw.githubusercontent.com/smpalhamra/datasiswa/refs/heads/main/db/dasis.json">
+      </div>
+
+      <div id="importCSV" style="display:none;">
+        <input type="file" id="fileCSV" accept=".csv,.xlsx,.xls">
+      </div>
+
+      <div class="kelola-actions">
+        <button onclick="importData()">Import</button>
+        <button onclick="exportData()">Ekspor</button>
+        <button onclick="exportFilteredJSON()">Ekspor JSON (Tampil)</button>
+        <button onclick="exportFilteredExcel()">Ekspor Excel (Tampil)</button>
+        <button onclick="resetData()">Reset</button>
+      </div>
+
+      <div id="status">✔ Data tersimpan</div>
+    </div>
+
+    <!-- FILTER -->
+    <div class="kelola-card">
+      <h3>FILTER DATA</h3>
+      <div class="kelola-actions">
+        <select id="filterJK">
+          <option value="">Semua JK</option>
+          <option value="L">L</option>
+          <option value="P">P</option>
+        </select>
+
+        <select id="filterKelas">
+          <option value="">Semua Kelas</option>
+          <option value="VII">VII</option>
+          <option value="VIII">VIII</option>
+          <option value="IX">IX</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- TABEL -->
+    <div class="kelola-card">
+      <h3>DATA SISWA</h3>
+      <div class="table-wrapper">
+        <table>
+          <thead id="theadSiswa"></thead>
+          <tbody id="tabelSiswa"></tbody>
+        </table>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+
+<!-- RIWAYAT -->
+<div id="riwayat" class="page">
+  <div class="kelola-wrap">
+
+    <div class="kelola-card">
+      <div class="riwayat-header">
+        <div>
+          <h2>Riwayat Perubahan</h2>
+          <p>Semua aktivitas perubahan data siswa tercatat di sini</p>
+        </div>
+        <button class="btn-danger" onclick="hapusRiwayat()">Hapus Semua</button>
+      </div>
+
+      <div class="table-wrapper riwayat-table">
+        <table id="riwayatTable">
+          <thead>
+            <tr>
+              <th>No</th>
+              <th>Waktu</th>
+              <th>Deskripsi</th>
+              <th>Undo</th>
+            </tr>
+          </thead>
+          <tbody id="tabelRiwayat"></tbody>
+        </table>
+      </div>
+
+      <div id="riwayatKosong" class="riwayat-kosong" style="display:none;">
+        Belum ada riwayat perubahan
+      </div>
+
+    </div>
+
+  </div>
+</div>
+
+
+<!-- PROFIL -->
+
+<div id="profil" class="page">
+  <div id="profilContainer"></div>
+</div>
+
+<script>
+let dataSiswa = JSON.parse(localStorage.getItem("dataSiswa")) || [];
+let riwayat = JSON.parse(localStorage.getItem("riwayatSiswa")) || [];
+let siswaAktifIndex = null;
+let modeEditProfil = false;
+
+let timerStatus;
+const kolomStandar = ['nama','jk','kelas','nisn','tempatLahir','tanggalLahir','nik'];
+
+const statusEl = document.getElementById("status");
+const filterJK = document.getElementById("filterJK");
+const filterKelas = document.getElementById("filterKelas");
+const importMode = document.getElementById("importMode");
+const importFile = document.getElementById("importFile");
+const importRaw = document.getElementById("importRaw");
+
+importMode.onchange = () => {
+    importFile.style.display='none';
+    importRaw.style.display='none';
+    document.getElementById("importCSV").style.display='none';
+
+    if(importMode.value==='file') importFile.style.display='block';
+    if(importMode.value==='raw') importRaw.style.display='block';
+    if(importMode.value==='csv') document.getElementById("importCSV").style.display='block';
+};
+
+
+function showPage(pageId){
+    document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+    document.getElementById(pageId).classList.add('active');
+    if(pageId==='home') tampilkanHome();
+    if(pageId==='kelola') tampilkanData();
+    if(pageId==='riwayat') tampilkanRiwayat();
+    if(pageId==='profil') tampilkanProfil();
+}
+
+function showStatus(){
+    clearTimeout(timerStatus);
+    statusEl.style.display="block";
+    timerStatus = setTimeout(()=>{statusEl.style.display="none";},2000);
+}
+
+function logRiwayat(desc){
+    riwayat.unshift({
+        waktu: new Date().toLocaleString(),
+        deskripsi: desc,
+        dataSebelum: JSON.parse(JSON.stringify(dataSiswa))
+    });
+    localStorage.setItem("riwayatSiswa", JSON.stringify(riwayat));
+}
+
+function importData(){
+    if(importMode.value==='file') importFromFile();
+    else if(importMode.value==='raw') importFromRaw();
+    else if(importMode.value==='csv') importFromCSV();
+}
+
+function importFromCSV(){
+    const file = document.getElementById("fileCSV").files[0];
+    if(!file) return alert("Pilih file CSV/Excel dulu");
+
+    const reader = new FileReader();
+
+    reader.onload = function(e){
+        const data = new Uint8Array(e.target.result);
+        const workbook = XLSX.read(data, {type:'array'});
+        const sheet = workbook.Sheets[workbook.SheetNames[0]];
+        const rows = XLSX.utils.sheet_to_json(sheet, {header:1, defval:""});
+
+        const header1 = rows[4] || [];
+        const header2 = rows[5] || [];
+
+        let headers = [];
+        let parent = "";
+
+        for(let i=0;i<header1.length;i++){
+            if(header1[i]) parent = header1[i];
+            headers.push(header2[i] ? parent + " - " + header2[i] : header1[i]);
+        }
+
+        let hasil = [];
+
+        for(let i=6;i<rows.length;i++){
+            let row = rows[i];
+            if(row.join("").trim()==="") continue;
+
+            let obj = {};
+
+            // SIMPAN SEMUA KOLOM ASLI
+            headers.forEach((h,idx)=>{
+                if(h) obj[h.trim()] = row[idx] ?? "";
+            });
+
+            // TAMBAHKAN FIELD STANDAR SISTEM
+            obj.nama = obj["Nama"] || "";
+            obj.nisn = obj["NISN"] || "";
+            obj.nik = obj["NIK"] || "";
+            obj.tempatLahir = obj["Tempat Lahir"] || "";
+            obj.tanggalLahir = obj["Tanggal Lahir"] || "";
+            obj.kelas = obj["Rombel Saat Ini"] || "";
+
+            let jkRaw = (obj["Jenis Kelamin"] || obj["JK"] || "")
+                .toString()
+                .trim()
+                .toUpperCase();
+
+            if(jkRaw.includes("L")) obj.jk="L";
+            else if(jkRaw.includes("P")) obj.jk="P";
+            else obj.jk="";
+
+            hasil.push(obj);
+        }
+
+        logRiwayat("Import CSV lengkap ("+hasil.length+" siswa)");
+        dataSiswa = hasil;
+        localStorage.setItem("dataSiswa", JSON.stringify(dataSiswa));
+
+        tampilkanData();
+        tampilkanHome();
+        showStatus();
+    };
+
+    reader.readAsArrayBuffer(file);
+}
+
+
+function importFromFile(){
+    const file = fileJson.files[0];
+    if(!file) return alert("Pilih file JSON");
+
+    const reader = new FileReader();
+    reader.onload = e=>{
+        try{
+            const json = JSON.parse(e.target.result);
+            if(!Array.isArray(json)) throw "Format JSON harus array";
+            logRiwayat("Import data JSON manual ("+json.length+" siswa)");
+            dataSiswa = json;
+            localStorage.setItem("dataSiswa", JSON.stringify(dataSiswa));
+            tampilkanData();
+            showStatus();
+        }catch(err){ alert(err); }
+    };
+    reader.readAsText(file);
+}
+
+function importFromRaw(){
+    const url = rawUrl.value.trim();
+    if(!url) return alert("Masukkan URL raw");
+
+    fetch(url)
+    .then(res=>{
+        if(!res.ok) throw "Gagal fetch data";
+        return res.json();
+    })
+    .then(json=>{
+        if(!Array.isArray(json)) throw "Format JSON harus array";
+        logRiwayat("Import data JSON dari URL ("+json.length+" siswa)");
+        dataSiswa=json;
+        localStorage.setItem("dataSiswa", JSON.stringify(dataSiswa));
+        tampilkanData();
+        showStatus();
+    })
+    .catch(err=>alert(err));
+}
+
+function resetData(){
+    logRiwayat("Reset seluruh data siswa");
+    dataSiswa=[];
+    siswaAktifIndex=null;
+    localStorage.removeItem("dataSiswa");
+    document.getElementById("menuProfil").style.display="none";
+    tampilkanData();
+    tampilkanHome();
+    showPage('home');
+}
+
+function exportData(){
+    const dataStr = JSON.stringify(dataSiswa,null,2);
+    const blob = new Blob([dataStr],{type:"application/json"});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href=url;
+    a.download="data_siswa.json";
+    a.click();
+    URL.revokeObjectURL(url);
+}
+
+function exportFilteredJSON(){
+    const fJK = filterJK.value.trim().toUpperCase();
+    const fKelas = filterKelas.value.trim().toUpperCase();
+
+    const dataFilter = dataSiswa.filter(s=>{
+        const jk = (s.jk || "").trim().toUpperCase();
+        const kelas = (s.kelas || "").trim().toUpperCase();
+
+        return (
+            (fJK === "" || jk === fJK) &&
+            (fKelas === "" || kelas === fKelas)
+        );
+    });
+
+    const dataStr = JSON.stringify(dataFilter, null, 2);
+    const blob = new Blob([dataStr], {type:"application/json"});
+    const url = URL.createObjectURL(blob);
+
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "data_siswa_filtered.json";
+    a.click();
+
+    URL.revokeObjectURL(url);
+}
+
+function exportFilteredExcel(){
+    const fJK = filterJK.value.trim().toUpperCase();
+    const fKelas = filterKelas.value.trim().toUpperCase();
+
+    const dataFilter = dataSiswa.filter(s=>{
+        const jk = (s.jk || "").trim().toUpperCase();
+        const kelas = (s.kelas || "").trim().toUpperCase();
+
+        return (
+            (fJK === "" || jk === fJK) &&
+            (fKelas === "" || kelas === fKelas)
+        );
+    });
+
+    if(dataFilter.length === 0){
+        alert("Tidak ada data untuk diekspor");
+        return;
+    }
+
+    const worksheet = XLSX.utils.json_to_sheet(dataFilter);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Data Siswa");
+
+    XLSX.writeFile(workbook, "data_siswa_filtered.xlsx");
+}
+
+
+function enableEdit(td,index,field){
+    td.contentEditable=true;
+    td.classList.add("editing");
+    td.focus();
+
+    const oldVal = dataSiswa[index][field]||"";
+
+    td.onblur=()=>{
+        td.contentEditable=false;
+        td.classList.remove("editing");
+
+        const newVal = td.innerText.trim();
+
+        if(oldVal!==newVal){
+            logRiwayat("Edit siswa ["+dataSiswa[index].nama+"] kolom "+field+" dari '"+oldVal+"' menjadi '"+newVal+"'");
+            dataSiswa[index][field]=newVal;
+            localStorage.setItem("dataSiswa", JSON.stringify(dataSiswa));
+            tampilkanData();
+            tampilkanHome();
+            if(siswaAktifIndex===index) tampilkanProfil();
+            showStatus();
+        }
+    };
+}
+
+function hapusSiswa(index){
+    const nama = dataSiswa[index].nama||"";
+    logRiwayat("Hapus siswa ["+nama+"]");
+    dataSiswa.splice(index,1);
+    localStorage.setItem("dataSiswa", JSON.stringify(dataSiswa));
+
+    if(siswaAktifIndex===index){
+        siswaAktifIndex=null;
+        document.getElementById("menuProfil").style.display="none";
+        showPage('kelola');
+    }
+
+    tampilkanData();
+    tampilkanHome();
+    showStatus();
+}
+
+function tampilkanData(){
+    const tbody = document.getElementById("tabelSiswa");
+    const thead = document.getElementById("theadSiswa");
+    tbody.innerHTML = "";
+
+    // Header tetap (tanpa kolom tambahan)
+    thead.innerHTML = `<tr>
+        <th>No</th>
+        <th>Nama</th>
+        <th>JK</th>
+        <th>Kelas</th>
+        <th>NISN</th>
+        <th>Tempat Lahir</th>
+        <th>Tanggal Lahir</th>
+        <th>NIK</th>
+        <th>Aksi</th>
+    </tr>`;
+
+    const fJK = filterJK.value.trim().toUpperCase();
+    const fKelas = filterKelas.value.trim().toUpperCase();
+
+    let no = 1;
+
+    dataSiswa.forEach((s, originalIndex)=>{
+
+        const jk = (s.jk || "").trim().toUpperCase();
+        const kelas = (s.kelas || "").trim().toUpperCase();
+
+        if(
+            (fJK === "" || jk === fJK) &&
+            (fKelas === "" || kelas === fKelas)
+        ){
+            tbody.innerHTML += `<tr>
+                <td>${no++}</td>
+                <td class="editable" ondblclick="enableEdit(this,${originalIndex},'nama')">${s.nama||''}</td>
+                <td class="editable" ondblclick="enableEdit(this,${originalIndex},'jk')">${s.jk||''}</td>
+                <td class="editable" ondblclick="enableEdit(this,${originalIndex},'kelas')">${s.kelas||''}</td>
+                <td class="editable" ondblclick="enableEdit(this,${originalIndex},'nisn')">${s.nisn||''}</td>
+                <td class="editable" ondblclick="enableEdit(this,${originalIndex},'tempatLahir')">${s.tempatLahir||''}</td>
+                <td class="editable" ondblclick="enableEdit(this,${originalIndex},'tanggalLahir')">${s.tanggalLahir||''}</td>
+                <td class="editable" ondblclick="enableEdit(this,${originalIndex},'nik')">${s.nik||''}</td>
+                <td>
+<div class="aksi-wrap">
+        <button onclick="bukaProfil(${originalIndex})">📄</button>
+        <button class="btn-danger" onclick="hapusSiswa(${originalIndex})">❌</button>
+    </div>
+                </td>
+            </tr>`;
+        }
+    });
+}
+
+function tampilkanHome(){
+    const thead = document.getElementById("theadStatistik");
+    const tbody = document.getElementById("tabelStatistik");
+
+    tbody.innerHTML = "";
+
+    // Header tabel
+    thead.innerHTML = `
+        <tr>
+            <th>No</th>
+            <th>Kelas</th>
+            <th>L</th>
+            <th>P</th>
+            <th>Jumlah</th>
+        </tr>
+    `;
+
+    // Kelompokkan data per kelas
+    let statistik = {};
+
+    dataSiswa.forEach(s=>{
+        const kelas = (s.kelas || "").trim().toUpperCase();
+        const jk = (s.jk || "").trim().toUpperCase();
+
+        if(!kelas) return;
+
+        if(!statistik[kelas]){
+            statistik[kelas] = { L:0, P:0 };
+        }
+
+        if(jk === "L") statistik[kelas].L++;
+        if(jk === "P") statistik[kelas].P++;
+    });
+
+    let no = 1;
+    let totalL = 0;
+    let totalP = 0;
+    let totalSemua = 0;
+
+    Object.keys(statistik).sort().forEach(kelas=>{
+        const L = statistik[kelas].L;
+        const P = statistik[kelas].P;
+        const jumlah = L + P;
+
+        totalL += L;
+        totalP += P;
+        totalSemua += jumlah;
+
+        tbody.innerHTML += `
+            <tr>
+                <td>${no++}</td>
+                <td>${kelas}</td>
+                <td>${L}</td>
+                <td>${P}</td>
+                <td><strong>${jumlah}</strong></td>
+            </tr>
+        `;
+    });
+
+    // Baris total
+    tbody.innerHTML += `
+        <tr style="background:#eef6ff;font-weight:bold;">
+            <td colspan="2">TOTAL</td>
+            <td>${totalL}</td>
+            <td>${totalP}</td>
+            <td>${totalSemua}</td>
+        </tr>
+    `;
+}
+
+
+function tampilkanRiwayat(){
+    const tbody=document.getElementById("tabelRiwayat");
+    const kosong=document.getElementById("riwayatKosong");
+    tbody.innerHTML="";
+
+    if(riwayat.length===0){
+        kosong.style.display="block";
+        return;
+    }else{
+        kosong.style.display="none";
+    }
+
+    riwayat.forEach((r,i)=>{
+        tbody.innerHTML+=`<tr>
+            <td>${i+1}</td>
+            <td>${r.waktu}</td>
+            <td>${r.deskripsi}</td>
+            <td><button onclick="undoRiwayat(${i})">↩️ Undo</button></td>
+        </tr>`;
+    });
+}
+
+
+function undoRiwayat(index){
+    const entry = riwayat[index];
+    if(entry && entry.dataSebelum){
+        dataSiswa = entry.dataSebelum;
+        localStorage.setItem("dataSiswa", JSON.stringify(dataSiswa));
+        riwayat.splice(index,1);
+        localStorage.setItem("riwayatSiswa", JSON.stringify(riwayat));
+
+        tampilkanData();
+        tampilkanHome();
+        tampilkanRiwayat();
+
+        if(siswaAktifIndex!==null){
+            tampilkanProfil();
+        }
+
+        showStatus();
+        alert("Undo berhasil: " + entry.deskripsi);
+    }
+}
+
+function bukaProfil(index){
+    siswaAktifIndex = index;
+    document.getElementById("menuProfil").style.display="inline-block";
+    tampilkanProfil();
+    showPage('profil');
+}
+
+function tutupProfil(){
+    siswaAktifIndex = null;
+    document.getElementById("menuProfil").style.display="none";
+    showPage('kelola');
+}
+
+function tampilkanProfil(){
+    const c = document.getElementById("profilContainer");
+    c.innerHTML = "";
+
+    if(siswaAktifIndex===null || !dataSiswa[siswaAktifIndex]){
+        c.innerHTML="<p>Data tidak ditemukan</p>";
+        return;
+    }
+
+    const s = dataSiswa[siswaAktifIndex];
+    const nama = s.nama || "-";
+    const nisn = s.nisn || "-";
+    const kelas = s.kelas || "-";
+    const jkLabel = s.jk==="L"?"Laki-laki":s.jk==="P"?"Perempuan":"-";
+
+    function row(label,val,field){
+        if(!val && !modeEditProfil) return "";
+        if(modeEditProfil){
+            return `<div class="profil-row">
+                <span>${label}</span>
+                <input data-field="${field}" value="${val||""}">
+            </div>`;
+        }
+        return `<div class="profil-row"><span>${label}</span><span>${val}</span></div>`;
+    }
+
+    const blacklist = ["nama","jk","kelas","nisn","nik","tempatLahir","tanggalLahir"];
+
+    let tambahan="";
+    Object.keys(s).forEach(k=>{
+        if(blacklist.includes(k)) return;
+        tambahan += row(k, s[k], k);
+    });
+
+    c.innerHTML = `
+    <div class="profil-card">
+
+        <div class="profil-header">
+            <button onclick="tutupProfil()" style="
+                background:#fff;
+                color:#3498db;
+                border:1px solid #e5e7eb;
+                padding:6px 10px;
+                border-radius:8px;
+                cursor:pointer;
+            ">←</button>
+
+            <div class="profil-foto">${nama.charAt(0)}</div>
+
+            <div>
+                ${modeEditProfil 
+                    ? `<input id="editNama" value="${nama}" style="font-size:18px;font-weight:700;">`
+                    : `<div class="profil-nama">${nama}</div>`
+                }
+                <div class="profil-sub">${nisn} • ${kelas} • ${jkLabel}</div>
+            </div>
+        </div>
+
+        <div class="profil-section">
+            <h3>BIODATA SISWA</h3>
+            ${row("Tempat Lahir",s.tempatLahir,"tempatLahir")}
+            ${row("Tanggal Lahir",s.tanggalLahir,"tanggalLahir")}
+            ${row("NIK",s.nik,"nik")}
+            ${row("Jenis Kelamin",s.jk,"jk")}
+            ${row("Kelas",s.kelas,"kelas")}
+        </div>
+
+        <div class="profil-section">
+            <h3>DATA TAMBAHAN</h3>
+            ${tambahan || "<i>Tidak ada data tambahan</i>"}
+        </div>
+
+        <div class="profil-actions">
+            <button onclick="toggleEditProfil()">
+                ${modeEditProfil ? "Simpan Perubahan" : "Edit Data"}
+            </button>
+            <button onclick="hapusSiswa(${siswaAktifIndex})">Hapus Siswa</button>
+        </div>
+
+    </div>`;
+}
+
+function toggleEditProfil(){
+    if(!modeEditProfil){
+        modeEditProfil = true;
+        tampilkanProfil();
+        return;
+    }
+
+    const s = dataSiswa[siswaAktifIndex];
+
+    document.querySelectorAll("#profilContainer input").forEach(inp=>{
+        const field = inp.dataset.field;
+        if(field){
+            s[field] = inp.value;
+        }
+    });
+
+    const namaBaru = document.getElementById("editNama")?.value;
+    if(namaBaru) s.nama = namaBaru;
+
+    logRiwayat("Edit profil siswa ["+s.nama+"]");
+    localStorage.setItem("dataSiswa", JSON.stringify(dataSiswa));
+
+    modeEditProfil = false;
+
+    tampilkanData();
+    tampilkanHome();
+    tampilkanProfil();
+    showStatus();
+}
+
+
+function hapusRiwayat(){
+    if(confirm("Yakin ingin menghapus seluruh riwayat?")){
+        riwayat=[];
+        localStorage.removeItem("riwayatSiswa");
+        tampilkanRiwayat();
+        alert("Riwayat berhasil dihapus");
+    }
+}
+
+filterJK.onchange = tampilkanData;
+filterKelas.onchange = tampilkanData;
+
+tampilkanHome();
+tampilkanData();
+</script>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+
+</body>
+</html>
