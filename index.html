@@ -188,6 +188,84 @@ td.editing{background:#fffbe6;outline:2px solid #2ecc71}
   body{padding:24px}
 }
 
+/* ===== RIWAYAT MODERN ===== */
+.riwayat-header{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  gap:10px;
+  margin-bottom:12px;
+}
+
+.riwayat-header h2{
+  font-size:18px;
+  margin-bottom:2px;
+}
+
+.riwayat-header p{
+  font-size:12px;
+  color:#6b7280;
+}
+
+.btn-danger{
+  background:#e74c3c;
+}
+.btn-danger:hover{
+  background:#c0392b;
+}
+
+.riwayat-table table{
+  min-width:unset;
+}
+
+.riwayat-table th:nth-child(1),
+.riwayat-table td:nth-child(1){
+  width:40px;
+  text-align:center;
+}
+
+.riwayat-table th:nth-child(2),
+.riwayat-table td:nth-child(2){
+  width:160px;
+  font-size:12px;
+}
+
+.riwayat-table td:nth-child(4){
+  text-align:center;
+}
+
+.riwayat-table button{
+  padding:4px 8px;
+  font-size:12px;
+}
+
+.riwayat-kosong{
+  text-align:center;
+  padding:16px;
+  color:#888;
+  font-style:italic;
+}
+
+/* ===== KOLOM AKSI ===== */
+td.aksi{
+  white-space:nowrap;
+}
+
+.aksi-wrap{
+  display:flex;
+  gap:6px;
+  justify-content:center;
+  align-items:center;
+}
+
+.aksi-wrap button{
+  padding:4px 8px;
+  font-size:12px;
+  border-radius:6px;
+  line-height:1.2;
+}
+
+
 </style>
 </head>
 
@@ -300,22 +378,40 @@ td.editing{background:#fffbe6;outline:2px solid #2ecc71}
 
 <!-- RIWAYAT -->
 <div id="riwayat" class="page">
-  <h2>Riwayat Perubahan</h2>
-  <button onclick="hapusRiwayat()">Hapus Semua Riwayat</button>
-  <div class="table-wrapper">
-    <table id="riwayatTable">
-      <thead>
-        <tr>
-          <th>No</th>
-          <th>Waktu</th>
-          <th>Deskripsi</th>
-          <th>Undo</th>
-        </tr>
-      </thead>
-      <tbody id="tabelRiwayat"></tbody>
-    </table>
+  <div class="kelola-wrap">
+
+    <div class="kelola-card">
+      <div class="riwayat-header">
+        <div>
+          <h2>Riwayat Perubahan</h2>
+          <p>Semua aktivitas perubahan data siswa tercatat di sini</p>
+        </div>
+        <button class="btn-danger" onclick="hapusRiwayat()">Hapus Semua</button>
+      </div>
+
+      <div class="table-wrapper riwayat-table">
+        <table id="riwayatTable">
+          <thead>
+            <tr>
+              <th>No</th>
+              <th>Waktu</th>
+              <th>Deskripsi</th>
+              <th>Undo</th>
+            </tr>
+          </thead>
+          <tbody id="tabelRiwayat"></tbody>
+        </table>
+      </div>
+
+      <div id="riwayatKosong" class="riwayat-kosong" style="display:none;">
+        Belum ada riwayat perubahan
+      </div>
+
+    </div>
+
   </div>
 </div>
+
 
 <!-- PROFIL -->
 
@@ -647,8 +743,10 @@ function tampilkanData(){
                 <td class="editable" ondblclick="enableEdit(this,${originalIndex},'tanggalLahir')">${s.tanggalLahir||''}</td>
                 <td class="editable" ondblclick="enableEdit(this,${originalIndex},'nik')">${s.nik||''}</td>
                 <td>
-                    <button onclick="bukaProfil(${originalIndex})">📄</button>
-                    <button onclick="hapusSiswa(${originalIndex})">❌</button>
+<div class="aksi-wrap">
+        <button onclick="bukaProfil(${originalIndex})">📄</button>
+        <button class="btn-danger" onclick="hapusSiswa(${originalIndex})">❌</button>
+    </div>
                 </td>
             </tr>`;
         }
@@ -728,14 +826,26 @@ function tampilkanHome(){
 
 function tampilkanRiwayat(){
     const tbody=document.getElementById("tabelRiwayat");
+    const kosong=document.getElementById("riwayatKosong");
     tbody.innerHTML="";
+
+    if(riwayat.length===0){
+        kosong.style.display="block";
+        return;
+    }else{
+        kosong.style.display="none";
+    }
+
     riwayat.forEach((r,i)=>{
         tbody.innerHTML+=`<tr>
-            <td>${i+1}</td><td>${r.waktu}</td><td>${r.deskripsi}</td>
+            <td>${i+1}</td>
+            <td>${r.waktu}</td>
+            <td>${r.deskripsi}</td>
             <td><button onclick="undoRiwayat(${i})">↩️ Undo</button></td>
         </tr>`;
     });
 }
+
 
 function undoRiwayat(index){
     const entry = riwayat[index];
