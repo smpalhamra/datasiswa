@@ -445,18 +445,16 @@ function tampilkanData(){
     const thead = document.getElementById("theadSiswa");
     tbody.innerHTML = "";
 
-    let tambahanKeys = new Set();
-    dataSiswa.forEach(s=>{
-        Object.keys(s).forEach(k=>{
-            if(!kolomStandar.includes(k)) tambahanKeys.add(k);
-        });
-    });
-    tambahanKeys = Array.from(tambahanKeys);
-
+    // Header tetap (tanpa kolom tambahan)
     thead.innerHTML = `<tr>
-        <th>No</th><th>Nama</th><th>JK</th><th>Kelas</th><th>NISN</th>
-        <th>Tempat Lahir</th><th>Tanggal Lahir</th><th>NIK</th>
-        ${tambahanKeys.map(k=>`<th>${k}</th>`).join('')}
+        <th>No</th>
+        <th>Nama</th>
+        <th>JK</th>
+        <th>Kelas</th>
+        <th>NISN</th>
+        <th>Tempat Lahir</th>
+        <th>Tanggal Lahir</th>
+        <th>NIK</th>
         <th>Aksi</th>
     </tr>`;
 
@@ -483,11 +481,6 @@ function tampilkanData(){
                 <td class="editable" ondblclick="enableEdit(this,${originalIndex},'tempatLahir')">${s.tempatLahir||''}</td>
                 <td class="editable" ondblclick="enableEdit(this,${originalIndex},'tanggalLahir')">${s.tanggalLahir||''}</td>
                 <td class="editable" ondblclick="enableEdit(this,${originalIndex},'nik')">${s.nik||''}</td>
-                ${tambahanKeys.map(k=>`
-                    <td class="editable"
-                        ondblclick="enableEdit(this,${originalIndex},'${k}')">
-                        ${s[k]||''}
-                    </td>`).join('')}
                 <td>
                     <button onclick="bukaProfil(${originalIndex})">📄</button>
                     <button onclick="hapusSiswa(${originalIndex})">❌</button>
@@ -498,30 +491,32 @@ function tampilkanData(){
 }
 
 function tampilkanHome(){
-    const tbody=document.getElementById("tabelHome");
-    const thead=document.getElementById("theadHome");
-    tbody.innerHTML="";
+    const tbody = document.getElementById("tabelHome");
+    const thead = document.getElementById("theadHome");
+    tbody.innerHTML = "";
 
-    let tambahanKeys=new Set();
-    dataSiswa.forEach(s=>{
-        Object.keys(s).forEach(k=>{
-            if(!kolomStandar.includes(k)) tambahanKeys.add(k);
-        });
-    });
-    tambahanKeys=Array.from(tambahanKeys);
-
-    thead.innerHTML=`<tr>
-        <th>No</th><th>Nama</th><th>JK</th><th>Kelas</th><th>NISN</th>
-        <th>Tempat Lahir</th><th>Tanggal Lahir</th><th>NIK</th>
-        ${tambahanKeys.map(k=>`<th>${k}</th>`).join('')}
+    // Header tetap (tanpa kolom tambahan)
+    thead.innerHTML = `<tr>
+        <th>No</th>
+        <th>Nama</th>
+        <th>JK</th>
+        <th>Kelas</th>
+        <th>NISN</th>
+        <th>Tempat Lahir</th>
+        <th>Tanggal Lahir</th>
+        <th>NIK</th>
     </tr>`;
 
     dataSiswa.forEach((s,i)=>{
-        tbody.innerHTML+=`<tr>
-            <td>${i+1}</td><td>${s.nama||''}</td><td>${s.jk||''}</td>
-            <td>${s.kelas||''}</td><td>${s.nisn||''}</td><td>${s.tempatLahir||''}</td>
-            <td>${s.tanggalLahir||''}</td><td>${s.nik||''}</td>
-            ${tambahanKeys.map(k=>`<td>${s[k]||''}</td>`).join('')}
+        tbody.innerHTML += `<tr>
+            <td>${i+1}</td>
+            <td>${s.nama||''}</td>
+            <td>${s.jk||''}</td>
+            <td>${s.kelas||''}</td>
+            <td>${s.nisn||''}</td>
+            <td>${s.tempatLahir||''}</td>
+            <td>${s.tanggalLahir||''}</td>
+            <td>${s.nik||''}</td>
         </tr>`;
     });
 }
