@@ -156,10 +156,13 @@ td.editing {
   <h2>Kelola Data Siswa</h2>
 
   <div class="form-row">
-    <select id="importMode">
-      <option value="file" selected>Import File JSON</option>
-      <option value="raw">Import URL (Raw)</option>
-    </select>
+	
+	<select id="importMode">
+	  <option value="file" selected>Import File JSON</option>
+	  <option value="raw">Import URL (Raw)</option>
+	  <option value="csv">Import CSV / Excel Dapodik</option>
+	</select>
+
 
     <div id="importFile">
       <input type="file" id="fileJson" accept=".json">
@@ -170,6 +173,11 @@ td.editing {
       value="https://raw.githubusercontent.com/smpalhamra/datasiswa/refs/heads/main/db/dasis.json">
     </div>
   </div>
+  
+	  <div id="importCSV" style="display:none;">
+	  <input type="file" id="fileCSV" accept=".csv,.xlsx,.xls">
+	</div>
+
 
   <div class="form-row">
     <button onclick="importData()">Import</button>
@@ -248,14 +256,15 @@ const importFile = document.getElementById("importFile");
 const importRaw = document.getElementById("importRaw");
 
 importMode.onchange = () => {
-    if(importMode.value==='file'){
-        importFile.style.display='block';
-        importRaw.style.display='none';
-    } else {
-        importFile.style.display='none';
-        importRaw.style.display='block';
-    }
+    importFile.style.display='none';
+    importRaw.style.display='none';
+    document.getElementById("importCSV").style.display='none';
+
+    if(importMode.value==='file') importFile.style.display='block';
+    if(importMode.value==='raw') importRaw.style.display='block';
+    if(importMode.value==='csv') document.getElementById("importCSV").style.display='block';
 };
+
 
 function showPage(pageId){
     document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
@@ -283,8 +292,78 @@ function logRiwayat(desc){
 
 function importData(){
     if(importMode.value==='file') importFromFile();
-    else importFromRaw();
+    else if(importMode.value==='raw') importFromRaw();
+    else if(importMode.value==='csv') importFromCSV();
 }
+
+function importFromCSV(){
+    const file = document.getElementById("fileCSV").files[0];
+    if(!file) return alert("Pilih file CSV/Excel dulu");
+
+    const reader = new FileReader();
+
+    reader.onload = function(e){
+        const data = new Uint8Array(e.target.result);
+        const workbook = XLSX.read(data, {type:'array'});
+        const sheet = workbook.Sheets[workbook.SheetNames[0]];
+        const rows = XLSX.utils.sheet_to_json(sheet, {header:1, defval:""});
+
+        const header1 = rows[4] || [];
+        const header2 = rows[5] || [];
+
+        let headers = [];
+        let parent = "";
+
+        for(let i=0;i<header1.length;i++){
+            if(header1[i]) parent = header1[i];
+            headers.push(header2[i] ? parent + " - " + header2[i] : header1[i]);
+        }
+
+        let hasil = [];
+
+        for(let i=6;i<rows.length;i++){
+            let row = rows[i];
+            if(row.join("").trim()==="") continue;
+
+            let obj = {};
+
+            // SIMPAN SEMUA KOLOM ASLI
+            headers.forEach((h,idx)=>{
+                if(h) obj[h.trim()] = row[idx] ?? "";
+            });
+
+            // TAMBAHKAN FIELD STANDAR SISTEM
+            obj.nama = obj["Nama"] || "";
+            obj.nisn = obj["NISN"] || "";
+            obj.nik = obj["NIK"] || "";
+            obj.tempatLahir = obj["Tempat Lahir"] || "";
+            obj.tanggalLahir = obj["Tanggal Lahir"] || "";
+            obj.kelas = obj["Rombel Saat Ini"] || "";
+
+            let jkRaw = (obj["Jenis Kelamin"] || obj["JK"] || "")
+                .toString()
+                .trim()
+                .toUpperCase();
+
+            if(jkRaw.includes("L")) obj.jk="L";
+            else if(jkRaw.includes("P")) obj.jk="P";
+            else obj.jk="";
+
+            hasil.push(obj);
+        }
+
+        logRiwayat("Import CSV lengkap ("+hasil.length+" siswa)");
+        dataSiswa = hasil;
+        localStorage.setItem("dataSiswa", JSON.stringify(dataSiswa));
+
+        tampilkanData();
+        tampilkanHome();
+        showStatus();
+    };
+
+    reader.readAsArrayBuffer(file);
+}
+
 
 function importFromFile(){
     const file = fileJson.files[0];
@@ -620,10 +699,29 @@ function tampilkanProfil(){
 
     const siswa = dataSiswa[siswaAktifIndex];
 
-    Object.keys(siswa).forEach(field=>{
+    // Urutkan: kolom penting di atas
+    const prioritas = ['nama','jk','kelas','nisn','nik','tempatLahir','tanggalLahir'];
+
+    const semuaField = Object.keys(siswa);
+
+    semuaField.sort((a,b)=>{
+        const pa = prioritas.indexOf(a);
+        const pb = prioritas.indexOf(b);
+        if(pa!==-1 && pb!==-1) return pa-pb;
+        if(pa!==-1) return -1;
+        if(pb!==-1) return 1;
+        return a.localeCompare(b);
+    });
+
+    semuaField.forEach(field=>{
+        let label = field
+            .replace(/_/g,' ')
+            .replace(/-/g,' ')
+            .replace(/\b\w/g,l=>l.toUpperCase());
+
         container.innerHTML += `
             <div style="margin-bottom:10px;">
-                <strong>${field}</strong><br>
+                <strong>${label}</strong><br>
                 <div class="editable"
                     ondblclick="enableEditProfil(this,'${field}')"
                     style="padding:6px;border:1px solid #ccc;border-radius:6px;">
@@ -633,6 +731,7 @@ function tampilkanProfil(){
         `;
     });
 }
+
 
 function enableEditProfil(el,field){
     el.contentEditable=true;
